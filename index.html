@@ -316,7 +316,6 @@
               </div>
             </div>
             <div class="ai-status" id="aiStatus"></div>
-            <button type="button" class="btn secondary" id="manualToggle" style="margin-top:10px">Inserisci il punteggio a mano</button>
           </div>
 
           <div class="manual-fields" id="manualFields" hidden>
@@ -644,13 +643,10 @@
     if (fileInput.files && fileInput.files[0]) setFile(fileInput.files[0]);
   });
 
-  // ---------- manual fallback (AI read unavailable/failing, or the person just prefers typing it) ----------
-  var manualToggle = $("manualToggle"), manualFields = $("manualFields"), fTotalInput = $("fTotal");
-  manualToggle.addEventListener("click", function () {
-    manualFields.hidden = false;
-    manualToggle.hidden = true;
-    fTotalInput.focus();
-  });
+  // fTotal/fMode/roundsList stay in the DOM (hidden) purely as internal state the AI read
+  // writes into for saveEntry() to use — there is no manual-entry UI; a read that fails
+  // just offers "Riprova", never a way to type the score by hand.
+  var manualFields = $("manualFields"), fTotalInput = $("fTotal");
   fTotalInput.addEventListener("input", function () {
     var v = Number(fTotalInput.value);
     if (fTotalInput.value && v > 0) {
@@ -766,22 +762,17 @@
           '<button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
         var retryBtn2 = $("retryAnalyze");
         if (retryBtn2) retryBtn2.addEventListener("click", function () { analyzeFileGemini(); });
-        manualFields.hidden = false;
-        manualToggle.hidden = true;
         $("saveBtn").disabled = true;
       }
     }).catch(function (e) {
       clearTimeout(timeoutId);
       if (myToken !== analyzeToken || (e && e.stale)) return;
       var msg = "Non sono riuscito a leggere lo screenshot — riprova.";
-      if (e && e.http === 429) msg = "Troppe richieste a Gemini per ora — riprova tra poco, o inserisci il punteggio qui sotto.";
-      else if (e && e.http === 400) msg = "Immagine non valida o richiesta rifiutata — prova con un altro screenshot, o inserisci il punteggio qui sotto.";
-      else if (e && e.http === 403) msg = "Chiave Gemini non valida o senza permessi — controlla la configurazione, o inserisci il punteggio qui sotto.";
+      if (e && e.http === 429) msg = "Troppe richieste a Gemini per ora — riprova tra poco.";
+      else if (e && e.http === 400) msg = "Immagine non valida o richiesta rifiutata — prova con un altro screenshot.";
       aiStatus.innerHTML = msg + ' <button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
       var retryBtn3 = $("retryAnalyze");
       if (retryBtn3) retryBtn3.addEventListener("click", function () { analyzeFileGemini(); });
-      manualFields.hidden = false;
-      manualToggle.hidden = true;
       $("saveBtn").disabled = true;
     });
   }
