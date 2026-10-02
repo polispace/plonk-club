@@ -6,6 +6,37 @@
 <title>Plonk Club</title>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script type="module">
+  // Firebase AI Logic (Gemini) — uses the Firebase project's own config, no raw Gemini
+  // API key needed client-side. Exposes a tiny bridge for the classic-script code below,
+  // which still uses the compat Firestore SDK and isn't a module itself.
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
+  import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js";
+
+  var firebaseConfigForAI = {
+    apiKey: "AIzaSyAZ5FiBtbC-W_QkFMOJq-ZU0hfwajwfzSs",
+    authDomain: "plonk-club.firebaseapp.com",
+    projectId: "plonk-club",
+    storageBucket: "plonk-club.firebasestorage.app",
+    messagingSenderId: "908463019187",
+    appId: "1:908463019187:web:adafc04ad056c22416ccc6"
+  };
+  var aiApp = initializeApp(firebaseConfigForAI, "ai-logic");
+  var ai = getAI(aiApp, { backend: new GoogleAIBackend() });
+  var model = getGenerativeModel(ai, {
+    model: "gemini-3.8-flash",
+    generationConfig: { responseMimeType: "application/json" }
+  });
+
+  window.callGeminiAI = function (prompt, mimeType, base64Data) {
+    return model.generateContent([
+      prompt,
+      { inlineData: { mimeType: mimeType, data: base64Data } }
+    ]).then(function (result) {
+      return result.response.text();
+    });
+  };
+</script>
 <style>
   /* ---------------------------------------------------------------
      Design plan — Swiss / International Typographic Style.
@@ -320,9 +351,8 @@
     messagingSenderId: "908463019187",
     appId: "1:908463019187:web:adafc04ad056c22416ccc6"
   };
-  // Gemini: aistudio.google.com/apikey — tier gratuito, nessuna carta richiesta.
-  var GEMINI_API_KEY = "AQ.Ab8RN6KN-Vv1t6g8UkLcFLrzCjY-_BeMsl_in-bRIE39JFZv-Q";
-  var GEMINI_MODEL = "gemini-2.0-flash";
+  // Gemini: letto tramite Firebase AI Logic (vedi <script type="module"> in cima all'HTML) —
+  // nessuna API key gestita qui, usa la config Firebase del progetto.
   // ==========================================================
 
   firebase.initializeApp(firebaseConfig);
@@ -669,14 +699,6 @@
     analyzeStarted = true;
     var myToken = ++analyzeToken;
 
-    if (!GEMINI_API_KEY || GEMINI_API_KEY.indexOf("INCOLLA_QUI") === 0) {
-      aiStatus.textContent = "Lettura automatica non configurata (manca la chiave Gemini) — inserisci il punteggio qui sotto.";
-      manualFields.hidden = false;
-      manualToggle.hidden = true;
-      fTotalInput.focus();
-      return;
-    }
-
     aiStatus.innerHTML = '<span class="spinner"></span> Sto leggendo lo screenshot…';
     $("saveBtn").disabled = true;
 
@@ -706,24 +728,11 @@
 
     fileToBase64(pendingFile).then(function (b64) {
       if (myToken !== analyzeToken) return Promise.reject({ stale: true });
-      var body = {
-        contents: [{
-          parts: [
-            { text: prompt },
-            { inline_data: { mime_type: pendingFile.type || "image/png", data: b64 } }
-          ]
-        }],
-        generationConfig: { responseMimeType: "application/json" }
-      };
-      return fetch("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
-        body: JSON.stringify(body)
-      }).then(function (r) {
-        if (!r.ok) return r.json().catch(function () { return null; }).then(function (errBody) {
-          return Promise.reject({ http: r.status, body: errBody });
-        });
-        return r.json();
+      if (!window.callGeminiAI) return Promise.reject({ notReady: true });
+      return window.callGeminiAI(prompt, pendingFile.type || "image/png", b64).then(function (text) {
+        return { candidates: [{ content: { parts: [{ text: text }] } }] };
+      }).catch(function (err) {
+        return Promise.reject({ http: null, body: { error: { message: String(err && err.message || err) } } });
       });
     }).then(function (resp) {
       clearTimeout(timeoutId);
