@@ -23,18 +23,33 @@
   };
   var aiApp = initializeApp(firebaseConfigForAI, "ai-logic");
   var ai = getAI(aiApp, { backend: new GoogleAIBackend() });
-  var model = getGenerativeModel(ai, {
-    model: "gemini-3.8-flash",
-    generationConfig: { responseMimeType: "application/json" }
+  // Tried in order: when Google reports a model overloaded ("high demand", 5xx) or
+  // retired (404), the next one is used, so a demand spike on one model doesn't
+  // break the screenshot read.
+  var MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"];
+  var models = MODELS.map(function (name) {
+    return getGenerativeModel(ai, {
+      model: name,
+      generationConfig: { responseMimeType: "application/json" }
+    });
   });
 
+  function isRetryable(err) {
+    var msg = String(err && err.message || err);
+    return /\[(5\d\d|404|429)\s*\]|high demand|overloaded|unavailable|no longer available/i.test(msg);
+  }
+
   window.callGeminiAI = function (prompt, mimeType, base64Data) {
-    return model.generateContent([
-      prompt,
-      { inlineData: { mimeType: mimeType, data: base64Data } }
-    ]).then(function (result) {
-      return result.response.text();
-    });
+    var parts = [prompt, { inlineData: { mimeType: mimeType, data: base64Data } }];
+    function attempt(i) {
+      return models[i].generateContent(parts).then(function (result) {
+        return result.response.text();
+      }).catch(function (err) {
+        if (i + 1 < models.length && isRetryable(err)) return attempt(i + 1);
+        throw err;
+      });
+    }
+    return attempt(0);
   };
 </script>
 <style>
@@ -705,7 +720,7 @@
         '<button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
       var retryBtn = $("retryAnalyze");
       if (retryBtn) retryBtn.addEventListener("click", function () { analyzeFileGemini(); });
-    }, 25000);
+    }, 60000);
 
     var prompt = "Questa e' uno screenshot di un riepilogo punteggi del gioco GeoGuessr (una daily challenge o una partita), " +
       "ma il layout grafico puo' variare molto: a volte e' una striscia di 5 pin numerati con il punteggio sotto ciascuno e il totale a fianco; " +
