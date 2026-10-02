@@ -321,7 +321,7 @@
     appId: "1:908463019187:web:adafc04ad056c22416ccc6"
   };
   // Gemini: aistudio.google.com/apikey — tier gratuito, nessuna carta richiesta.
-  var GEMINI_API_KEY = "AQ.Ab8RN6L86i9q2zpjXXGX6YcXV-1kmymeeRxqshYOQZ5ep-rbXA";
+  var GEMINI_API_KEY = "AQ.Ab8RN6KN-Vv1t6g8UkLcFLrzCjY-_BeMsl_in-bRIE39JFZv-Q";
   var GEMINI_MODEL = "gemini-2.0-flash";
   // ==========================================================
 
@@ -715,9 +715,9 @@
         }],
         generationConfig: { responseMimeType: "application/json" }
       };
-      return fetch("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY, {
+      return fetch("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", "x-goog-api-key": GEMINI_API_KEY },
         body: JSON.stringify(body)
       }).then(function (r) {
         if (!r.ok) return r.json().catch(function () { return null; }).then(function (errBody) {
