@@ -204,14 +204,19 @@
 
   .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 12px; }
   .legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: var(--ink-2); }
-  .legend-item .swatch { width: 18px; height: 0; flex: none; }
+  .legend-item .swatch { width: 18px; height: 6px; flex: none; }
+  .legend-item { cursor: pointer; transition: opacity 120ms ease; }
+  .legend.has-hl .legend-item { opacity: 0.3; }
+  .legend.has-hl .legend-item.on { opacity: 1; font-weight: 700; }
+  .trend-svg g.series { transition: opacity 120ms ease; }
+  .trend-svg.has-hl g.series { opacity: 0.1; }
+  .trend-svg.has-hl g.series.on { opacity: 1; }
+  .trend-svg.has-hl g.series.on .line { stroke-width: 3.5; }
 
-  .pivot tbody tr.winner { background: var(--ink); }
-  .pivot tbody tr.winner td { color: var(--bg); border-bottom-color: var(--ink); font-weight: 700; }
   .pivot th.col-date { white-space: nowrap; }
 
   .tooltip {
-    position: absolute; pointer-events: none; background: var(--ink); color: var(--bg);
+    position: fixed; pointer-events: none; background: var(--ink); color: var(--bg);
     font-size: 0.72rem; padding: 6px 9px; border-radius: 0; transform: translate(-50%, -120%);
     white-space: nowrap; opacity: 0; transition: opacity 100ms ease; z-index: 5;
   }
@@ -382,8 +387,8 @@
   firebase.initializeApp(firebaseConfig);
 
   var state = { entries: [], db: null };
-  // Monochrome trend lines: distinguished by dash pattern, not hue.
-  var DASH_PATTERNS = ["none", "6,4", "1,4", "10,3,2,3", "2,2", "12,4,2,4", "8,2,2,2", "14,3"];
+  // Trend lines: one distinct hue per player (readable on light and dark backgrounds).
+  var LINE_COLORS = ["#e6194b", "#3b82f6", "#f59e0b", "#10b981", "#a855f7", "#ec4899", "#14b8a6", "#f97316"];
   var rounds = []; // working rounds list for the add form
   var pendingFile = null;
 
@@ -422,11 +427,11 @@
   });
 
   // ---------- player line-pattern assignment (stable, alphabetical, fixed order) ----------
-  function dashForPlayer(name) {
+  function colorForPlayer(name) {
     var players = Array.from(new Set(state.entries.map(function (e) { return e.player; }))).sort();
     var idx = players.indexOf(name);
     if (idx < 0) idx = 0;
-    return DASH_PATTERNS[idx % DASH_PATTERNS.length];
+    return LINE_COLORS[idx % LINE_COLORS.length];
   }
 
   // ---------- derived stats ----------
@@ -523,15 +528,13 @@
 
     var maxRounds = 5;
     todays.forEach(function (e) { if (e.rounds && e.rounds.length > maxRounds) maxRounds = e.rounds.length; });
-    var leaderTotal = todays[0].total;
 
     var html = '<div class="table-scroll"><table class="pivot"><thead><tr><th></th><th>Giocatore</th>';
     for (var r = 1; r <= maxRounds; r++) html += "<th class='num-cell'>R" + r + "</th>";
     html += "<th class='num-cell'>Totale</th></tr></thead><tbody>";
     todays.forEach(function (e, i) {
       var rankCell = rankCellHtml(i);
-      var isWinner = e.total === leaderTotal;
-      html += "<tr class='" + (isWinner ? "winner" : "") + "'><td class='rank num" + (i < 3 ? " top3" : "") + "'>" + rankCell + "</td><td><div class='player-cell'>" +
+      html += "<tr><td class='rank num" + (i < 3 ? " top3" : "") + "'>" + rankCell + "</td><td><div class='player-cell'>" +
         "<span class='player-name'>" + escapeHtml(e.player) + "</span></div></td>";
       for (var i2 = 0; i2 < maxRounds; i2++) {
         var rd = e.rounds && e.rounds[i2];
@@ -576,7 +579,7 @@
       gridY.push({ y: yAt(val), label: fmtInt(val) });
     }
 
-    var svg = '<svg width="100%" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Andamento punteggi">';
+    var svg = '<svg class="trend-svg" width="100%" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Andamento punteggi">';
     gridY.forEach(function (gl) {
       svg += '<line x1="' + padL + '" x2="' + (w - padR) + '" y1="' + gl.y.toFixed(1) + '" y2="' + gl.y.toFixed(1) + '" stroke="var(--line-soft)" stroke-width="1"/>';
       svg += '<text x="' + (padL - 8) + '" y="' + (gl.y + 3).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Helvetica, Arial, sans-serif">' + gl.label + "</text>";
@@ -588,29 +591,38 @@
 
     var pointData = [];
     players.forEach(function (p) {
-      var dash = dashForPlayer(p);
+      var color = colorForPlayer(p);
       var pts = [];
       datesAsc.forEach(function (d, i) {
         var v = byKey[d + "|" + p];
         if (v !== undefined) pts.push({ x: xAt(i), y: yAt(v), v: v, date: d, player: p });
       });
       if (pts.length) {
+        svg += '<g class="series" data-player="' + escapeHtml(p) + '">';
         var path = pts.map(function (pt, i) { return (i === 0 ? "M" : "L") + pt.x.toFixed(1) + "," + pt.y.toFixed(1); }).join(" ");
-        svg += '<path d="' + path + '" fill="none" stroke="var(--ink)" stroke-width="1.75" stroke-dasharray="' + dash + '" stroke-linecap="round" stroke-linejoin="round"/>';
+        svg += '<path d="' + path + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="line"/>';
         pts.forEach(function (pt) {
           svg += '<circle class="pt" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="7" fill="transparent" data-player="' + escapeHtml(pt.player) + '" data-date="' + pt.date + '" data-v="' + pt.v + '"/>';
-          svg += '<circle cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="var(--ink)" style="pointer-events:none"/>';
+          svg += '<circle cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="' + color + '" style="pointer-events:none"/>';
         });
+        svg += "</g>";
       }
-      pointData.push({ player: p, dash: dash });
+      pointData.push({ player: p, color: color });
     });
     svg += "</svg>";
     chartEl.innerHTML = svg;
 
     var tooltip = $("tooltip");
+    var svgEl = chartEl.querySelector("svg");
+    function highlight(name) {
+      svgEl.classList.toggle("has-hl", !!name);
+      svgEl.querySelectorAll("g.series").forEach(function (g) { g.classList.toggle("on", g.dataset.player === name); });
+      legendEl.classList.toggle("has-hl", !!name);
+      legendEl.querySelectorAll(".legend-item").forEach(function (li) { li.classList.toggle("on", li.dataset.player === name); });
+    }
     chartEl.querySelectorAll("circle.pt").forEach(function (c) {
       c.addEventListener("pointerenter", function (ev) {
-        var rect = chartEl.getBoundingClientRect();
+        highlight(c.dataset.player);
         tooltip.textContent = c.dataset.player + " — " + fmtInt(c.dataset.v) + " pt (" + fmtDateShort(c.dataset.date) + ")";
         tooltip.style.left = (ev.clientX) + "px";
         tooltip.style.top = (ev.clientY) + "px";
@@ -620,14 +632,19 @@
         tooltip.style.left = (ev.clientX) + "px";
         tooltip.style.top = (ev.clientY) + "px";
       });
-      c.addEventListener("pointerleave", function () { tooltip.classList.remove("show"); });
+      c.addEventListener("pointerleave", function () { tooltip.classList.remove("show"); highlight(null); });
     });
 
     legendEl.innerHTML = pointData.map(function (pd) {
       var swatchSvg = '<svg class="swatch" width="18" height="6" viewBox="0 0 18 6">' +
-        '<line x1="0" y1="3" x2="18" y2="3" stroke="var(--ink)" stroke-width="1.75" stroke-dasharray="' + pd.dash + '"/></svg>';
-      return '<span class="legend-item">' + swatchSvg + escapeHtml(pd.player) + "</span>";
+        '<line x1="0" y1="3" x2="18" y2="3" stroke="' + pd.color + '" stroke-width="3" stroke-linecap="round"/></svg>';
+      return '<span class="legend-item" data-player="' + escapeHtml(pd.player) + '">' + swatchSvg + escapeHtml(pd.player) + "</span>";
     }).join("");
+    legendEl.querySelectorAll(".legend-item").forEach(function (li) {
+      li.addEventListener("pointerenter", function () { highlight(li.dataset.player); });
+      li.addEventListener("pointerleave", function () { highlight(null); });
+      li.addEventListener("click", function () { highlight(li.classList.contains("on") ? null : li.dataset.player); });
+    });
   }
 
   // ---------- today chip ----------
