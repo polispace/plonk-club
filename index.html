@@ -1,0 +1,939 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plonk Club</title>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<style>
+  /* ---------------------------------------------------------------
+     Design plan — Swiss / International Typographic Style.
+     Layout: strict grid, flush-left alignment, hairline rules instead
+     of cards-with-shadows, one scrolling panel at a time.
+     Color: black, white, two greys. No hue anywhere in the UI chrome —
+     rank and emphasis come from type weight/size, not color.
+     Type: Helvetica/Arial system stack throughout, tabular figures for
+     anything numeric. Big, confident numerals carry the hierarchy.
+  ----------------------------------------------------------------- */
+  :root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f0f0f0;
+    --ink: #000000;
+    --ink-2: #4a4a4a;
+    --muted: #767676;
+    --line: #000000;
+    --line-soft: #d4d4d4;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #000000;
+      --surface: #000000;
+      --surface-2: #171717;
+      --ink: #ffffff;
+      --ink-2: #c7c7c7;
+      --muted: #8c8c8c;
+      --line: #ffffff;
+      --line-soft: #3a3a3a;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #000000;
+    --surface: #000000;
+    --surface-2: #171717;
+    --ink: #ffffff;
+    --ink-2: #c7c7c7;
+    --muted: #8c8c8c;
+    --line: #ffffff;
+    --line-soft: #3a3a3a;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body { background: var(--bg); color: var(--ink); }
+  body, button, input, select {
+    font-family: "Helvetica Neue", Helvetica, Arial, -apple-system, system-ui, sans-serif;
+  }
+  h1, h2, h3, .display { font-family: inherit; }
+  .num, .mono, time, td.num-cell {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .app { max-width: 720px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 72px; }
+
+  .topbar {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 3px solid var(--line);
+  }
+  .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+  .brand svg { flex: none; }
+  .brand h1 {
+    font-size: 1.6rem; font-weight: 700; margin: 0; letter-spacing: -0.01em;
+    text-transform: uppercase;
+  }
+  .brand p { margin: 2px 0 0; font-size: 0.72rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.03em; }
+  .today-chip {
+    flex: none; display: flex; flex-direction: column; align-items: flex-end;
+    font-size: 0.68rem; color: var(--muted); text-align: right; gap: 2px;
+    text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .today-chip .n { font-size: 1.5rem; color: var(--ink); font-weight: 700; letter-spacing: -0.02em; }
+
+  .tabs {
+    display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 24px;
+  }
+  .tab {
+    flex: 1; appearance: none; border: none; border-bottom: 3px solid transparent; background: transparent;
+    color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    padding-block: 13px; cursor: pointer; transition: color 120ms ease, border-color 120ms ease;
+    min-height: 44px;
+  }
+  .tab:hover { color: var(--ink); }
+  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--surface); border-top: 1px solid var(--line);
+    padding: 18px 0; margin-bottom: 8px;
+  }
+  .card h2 {
+    font-size: 0.78rem; margin: 0 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+  }
+  .card .sub { font-size: 0.8rem; color: var(--ink-2); margin: 0 0 16px; }
+
+  .empty {
+    text-align: center; padding-block: 40px 32px; display: flex; flex-direction: column;
+    align-items: center; gap: 10px;
+  }
+  .empty svg { opacity: 0.4; }
+  .empty h2 { font-size: 1.05rem; margin: 2px 0 0; text-transform: none; letter-spacing: 0; }
+  .empty p { margin: 0; color: var(--ink-2); font-size: 0.86rem; max-width: 36ch; }
+
+  .btn {
+    appearance: none; border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg);
+    font-weight: 700; font-size: 0.86rem; padding: 13px 18px; border-radius: 0; cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    text-transform: uppercase; letter-spacing: 0.03em; min-height: 46px; transition: opacity 120ms ease;
+  }
+  .btn:hover { opacity: 0.8; }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; }
+  .btn.secondary { background: transparent; color: var(--ink); border-color: var(--line-soft); }
+  .btn.secondary:hover { background: var(--surface-2); opacity: 1; }
+  .btn.block { width: 100%; justify-content: center; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.92rem; }
+  th { text-align: left; font-size: 0.66rem; letter-spacing: 0.06em; text-transform: uppercase;
+       color: var(--muted); font-weight: 700; padding: 0 10px 10px 0; border-bottom: 2px solid var(--line); }
+  th:first-child, td:first-child { padding-left: 0; }
+  th:last-child, td:last-child { padding-right: 0; }
+  td { padding: 15px 10px 15px 0; border-bottom: 1px solid var(--line-soft); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .num-cell { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .rank { color: var(--muted); font-size: 0.82rem; width: 2.2em; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .rank.top3 { color: var(--ink); font-size: 0.98rem; }
+  .medal { font-size: inherit; line-height: 1; font-weight: inherit; letter-spacing: 0; }
+  .media-col { font-weight: 700; color: var(--ink); font-size: 1.1rem; }
+  th.media-col { color: var(--ink); font-weight: 700; }
+  .player-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .player-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .table-scroll { overflow-x: auto; margin-inline: -4px; padding-inline: 4px; }
+
+  .spark { display: block; }
+
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 18px; margin-top: 12px; }
+  .legend-item { display: flex; align-items: center; gap: 7px; font-size: 0.78rem; color: var(--ink-2); }
+  .legend-item .swatch { width: 18px; height: 0; flex: none; }
+
+  .pivot tbody tr.winner { background: var(--ink); }
+  .pivot tbody tr.winner td { color: var(--bg); border-bottom-color: var(--ink); font-weight: 700; }
+  .pivot th.col-date { white-space: nowrap; }
+
+  .tooltip {
+    position: absolute; pointer-events: none; background: var(--ink); color: var(--bg);
+    font-size: 0.72rem; padding: 6px 9px; border-radius: 0; transform: translate(-50%, -120%);
+    white-space: nowrap; opacity: 0; transition: opacity 100ms ease; z-index: 5;
+  }
+  .tooltip.show { opacity: 1; }
+
+  form.add-form { display: flex; flex-direction: column; gap: 16px; }
+  .field { display: flex; flex-direction: column; gap: 6px; }
+  .field label { font-size: 0.72rem; font-weight: 700; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.04em; }
+  .field input[type="text"], .field input[type="date"], .field input[type="number"], .field select {
+    border: 1.5px solid var(--line); background: var(--surface); color: var(--ink);
+    border-radius: 0; padding: 12px 11px; font-size: 1rem; width: 100%;
+    font-family: inherit; appearance: none; min-height: 46px;
+  }
+  .field select {
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none'><path d='M5 8l5 5 5-5' stroke='%23000000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+    background-repeat: no-repeat; background-position: right 12px center; padding-right: 34px;
+  }
+  .field input:focus, .field select:focus { outline: 2px solid var(--ink); outline-offset: 1px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .dropzone {
+    border: 1.5px dashed var(--line-soft); border-radius: 0; padding: 24px 14px; text-align: center;
+    cursor: pointer; background: var(--surface-2); transition: border-color 120ms ease;
+    min-height: 46px;
+  }
+  .dropzone:hover, .dropzone.drag { border-color: var(--ink); }
+  .dropzone p { margin: 8px 0 0; font-size: 0.82rem; color: var(--ink-2); }
+  .dropzone .fname { font-weight: 700; color: var(--ink); }
+  .thumb { max-width: 160px; max-height: 160px; border-radius: 0; margin: 0 auto; display: block; border: 1px solid var(--line); }
+
+  .ai-status { font-size: 0.82rem; color: var(--ink-2); display: flex; align-items: center; gap: 8px; min-height: 1.2em; }
+  .spinner {
+    width: 13px; height: 13px; border-radius: 50%; border: 2px solid var(--line-soft);
+    border-top-color: var(--ink); animation: spin 0.8s linear infinite; flex: none;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .rounds-list { display: flex; flex-direction: column; gap: 8px; }
+
+  .banner {
+    font-size: 0.82rem; padding: 12px 14px; border-radius: 0; margin-bottom: 14px;
+    border: 1.5px solid var(--line); background: var(--surface-2); color: var(--ink);
+  }
+  .banner .tag { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; }
+  .banner.error { border-color: var(--ink); color: var(--ink); background: var(--surface-2); }
+  .banner.success { border-color: var(--ink); color: var(--ink); background: var(--ink); }
+  .banner.success, .banner.success .tag { color: var(--bg); }
+
+  @media (max-width: 480px) {
+    .row2 { grid-template-columns: 1fr; }
+    .brand h1 { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="brand">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" fill="var(--ink)"/>
+        <circle cx="12" cy="9" r="2.6" fill="var(--bg)"/>
+      </svg>
+      <div>
+        <h1>Plonk Club</h1>
+        <p>Classifica di gruppo per la daily di GeoGuessr</p>
+      </div>
+    </div>
+    <div class="today-chip">
+      <span>oggi</span>
+      <span class="n num" id="todayCount">—</span>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="compare" type="button">Confronto</button>
+    <button class="tab" data-tab="leaderboard" type="button">Classifica</button>
+    <button class="tab" data-tab="add" type="button">Aggiungi</button>
+  </nav>
+
+  <main>
+    <section id="panel-compare" class="panel active">
+      <div class="card" id="pivotCard">
+        <h2 id="pivotTitle">Confronto di oggi</h2>
+        <p class="sub" id="pivotSub">Round e totale di chi ha già giocato oggi, in ordine di punteggio.</p>
+        <div id="pivotBody"></div>
+      </div>
+    </section>
+
+    <section id="panel-leaderboard" class="panel">
+      <div class="card" id="leaderboardCard">
+        <h2>Classifica generale</h2>
+        <p class="sub">Media punti per partita, su tutte le daily registrate.</p>
+        <div id="leaderboardBody"></div>
+      </div>
+      <div class="card" id="trendCard" style="display:none">
+        <h2>Andamento</h2>
+        <p class="sub">Punteggio totale per giorno, un tracciato per persona.</p>
+        <div id="trendChart"></div>
+        <div class="legend" id="trendLegend"></div>
+      </div>
+    </section>
+
+    <section id="panel-add" class="panel">
+      <div class="card">
+        <h2>Aggiungi il tuo punteggio</h2>
+        <p class="sub">Scegli il nome, carica lo screenshot: si salva da solo appena l'AI legge il punteggio.</p>
+        <div id="addBanner"></div>
+        <form class="add-form" id="addForm">
+          <div class="field">
+            <label for="fPlayer">Nome</label>
+            <select id="fPlayer" required>
+              <option value="" disabled selected>Scegli il tuo nome…</option>
+              <option value="__new__">+ Aggiungi nuovo giocatore</option>
+            </select>
+            <input type="text" id="fPlayerNew" placeholder="Nome e cognome, o nickname" autocomplete="off" hidden>
+          </div>
+          <input type="hidden" id="fDate">
+
+          <div class="field">
+            <label>Screenshot</label>
+            <div class="dropzone" id="dropzone" tabindex="0" role="button" aria-label="Carica screenshot">
+              <input type="file" id="fFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+              <div id="dropzoneContent">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="margin:0 auto"><path d="M4 16V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v12" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                <p>Trascina qui l'immagine o tocca per scegliere</p>
+              </div>
+            </div>
+            <div class="ai-status" id="aiStatus"></div>
+            <button type="button" class="btn secondary" id="manualToggle" style="margin-top:10px">Inserisci il punteggio a mano</button>
+          </div>
+
+          <div class="manual-fields" id="manualFields" hidden>
+              <div class="field">
+                <label for="fTotal">Punteggio totale</label>
+                <input type="number" id="fTotal" min="0" step="1" inputmode="numeric" placeholder="Es. 19552">
+              </div>
+              <input type="text" id="fMode" hidden>
+              <div class="rounds-list" id="roundsList" hidden></div>
+          </div>
+
+          <button type="submit" class="btn block" id="saveBtn" disabled>Carica</button>
+        </form>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="tooltip" id="tooltip"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  // ====== CONFIGURA QUI prima di pubblicare la pagina ======
+  // Firebase: Console Firebase → Impostazioni progetto → le tue app → SDK setup and configuration.
+  var firebaseConfig = {
+    apiKey: "AIzaSyAZ5FiBtbC-W_QkFMOJq-ZU0hfwajwfzSs",
+    authDomain: "plonk-club.firebaseapp.com",
+    projectId: "plonk-club",
+    storageBucket: "plonk-club.firebasestorage.app",
+    messagingSenderId: "908463019187",
+    appId: "1:908463019187:web:adafc04ad056c22416ccc6"
+  };
+  // Gemini: aistudio.google.com/apikey — tier gratuito, nessuna carta richiesta.
+  var GEMINI_API_KEY = "AQ.Ab8RN6L86i9q2zpjXXGX6YcXV-1kmymeeRxqshYOQZ5ep-rbXA";
+  var GEMINI_MODEL = "gemini-2.0-flash";
+  // ==========================================================
+
+  firebase.initializeApp(firebaseConfig);
+
+  var state = { entries: [], db: null };
+  // Monochrome trend lines: distinguished by dash pattern, not hue.
+  var DASH_PATTERNS = ["none", "6,4", "1,4", "10,3,2,3", "2,2", "12,4,2,4", "8,2,2,2", "14,3"];
+  var rounds = []; // working rounds list for the add form
+  var pendingFile = null;
+
+  function $(id) { return document.getElementById(id); }
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function slugify(s) {
+    return String(s)
+      .normalize("NFD").replace(/[̀-ͯ]/g, "")
+      .toLowerCase().trim()
+      .replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "") || "player";
+  }
+  function todayStr() {
+    var d = new Date();
+    var tz = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - tz).toISOString().slice(0, 10);
+  }
+  function fmtDateShort(iso) {
+    var d = new Date(iso + "T00:00:00");
+    if (isNaN(d)) return iso;
+    return d.toLocaleDateString("it-IT", { day: "2-digit", month: "short" });
+  }
+  function fmtInt(n) { return Math.round(n).toLocaleString("it-IT"); }
+
+  // ---------- tabs ----------
+  document.querySelectorAll(".tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".tab").forEach(function (t) { t.classList.remove("active"); });
+      document.querySelectorAll(".panel").forEach(function (p) { p.classList.remove("active"); });
+      tab.classList.add("active");
+      $("panel-" + tab.dataset.tab).classList.add("active");
+    });
+  });
+
+  // ---------- player line-pattern assignment (stable, alphabetical, fixed order) ----------
+  function dashForPlayer(name) {
+    var players = Array.from(new Set(state.entries.map(function (e) { return e.player; }))).sort();
+    var idx = players.indexOf(name);
+    if (idx < 0) idx = 0;
+    return DASH_PATTERNS[idx % DASH_PATTERNS.length];
+  }
+
+  // ---------- derived stats ----------
+  function computeStats() {
+    var byPlayer = {};
+    state.entries.forEach(function (e) {
+      if (!byPlayer[e.player]) byPlayer[e.player] = [];
+      byPlayer[e.player].push(e);
+    });
+
+    // daily wins: the player(s) with the top total on each date, ties all count
+    var maxByDate = {};
+    state.entries.forEach(function (e) {
+      if (maxByDate[e.date] === undefined || e.total > maxByDate[e.date]) maxByDate[e.date] = e.total;
+    });
+    var winsByPlayer = {};
+    state.entries.forEach(function (e) {
+      if (e.total === maxByDate[e.date]) winsByPlayer[e.player] = (winsByPlayer[e.player] || 0) + 1;
+    });
+
+    var rows = Object.keys(byPlayer).map(function (name) {
+      var list = byPlayer[name].slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+      var totals = list.map(function (e) { return e.total; });
+      var sum = totals.reduce(function (a, b) { return a + b; }, 0);
+      return {
+        name: name,
+        games: list.length,
+        avg: sum / list.length,
+        wins: winsByPlayer[name] || 0,
+        best: Math.max.apply(null, totals)
+      };
+    });
+    rows.sort(function (a, b) { return b.avg - a.avg; });
+    return rows;
+  }
+
+  function rankCellHtml(i) {
+    return "<span class='medal'>" + (i + 1) + "°</span>";
+  }
+
+  // ---------- leaderboard render ----------
+  function renderLeaderboard() {
+    var body = $("leaderboardBody");
+    if (!state.entries.length) {
+      body.innerHTML = emptyStateHtml();
+      return;
+    }
+    var rows = computeStats();
+    var html = '<div class="table-scroll"><table><thead><tr>' +
+      "<th></th><th>Giocatore</th><th>Partite</th><th class='num-cell media-col'>Media</th>" +
+      "<th class='num-cell' title='Giorni in cui ha avuto il punteggio più alto'>🏆</th><th class='num-cell'>Migliore</th>" +
+      "</tr></thead><tbody>";
+    rows.forEach(function (r, i) {
+      var rankCell = rankCellHtml(i);
+      html += "<tr>" +
+        '<td class="rank num' + (i < 3 ? " top3" : "") + '">' + rankCell + "</td>" +
+        '<td><div class="player-cell">' +
+        '<span class="player-name">' + escapeHtml(r.name) + "</span></div></td>" +
+        "<td class='num-cell num'>" + r.games + "</td>" +
+        "<td class='num-cell num media-col'>" + fmtInt(r.avg) + "</td>" +
+        "<td class='num-cell num'>" + (r.wins || "–") + "</td>" +
+        "<td class='num-cell num'>" + fmtInt(r.best) + "</td>" +
+        "</tr>";
+    });
+    html += "</tbody></table></div>";
+    body.innerHTML = html;
+  }
+
+  function emptyStateHtml() {
+    return '<div class="empty">' +
+      '<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" stroke="var(--ink-2)" stroke-width="1.4"/><circle cx="12" cy="9" r="2.6" stroke="var(--ink-2)" stroke-width="1.4"/></svg>' +
+      "<h2>Nessun punteggio ancora</h2>" +
+      "<p>Appena qualcuno aggiunge la sua daily, la classifica e il confronto si popolano qui.</p>" +
+      '<button class="btn" type="button" onclick="document.querySelector(\'[data-tab=add]\').click()">Aggiungi il primo punteggio</button>' +
+      "</div>";
+  }
+
+  // ---------- today's round-by-round comparison ----------
+  function renderToday() {
+    var pivotBody = $("pivotBody");
+    var today = todayStr();
+    var todays = state.entries.filter(function (e) { return e.date === today; });
+    todays.sort(function (a, b) { return b.total - a.total; });
+
+    if (!todays.length) {
+      pivotBody.innerHTML = '<div class="empty">' +
+        '<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" stroke="var(--ink-2)" stroke-width="1.4"/><circle cx="12" cy="9" r="2.6" stroke="var(--ink-2)" stroke-width="1.4"/></svg>' +
+        "<h2>Nessuno ha ancora giocato oggi</h2>" +
+        "<p>Appena qualcuno carica la daily di oggi, la classifica di giornata compare qui, aggiornata in tempo reale.</p>" +
+        '<button class="btn" type="button" onclick="document.querySelector(\'[data-tab=add]\').click()">Aggiungi il tuo punteggio</button>' +
+        "</div>";
+      return;
+    }
+
+    var maxRounds = 5;
+    todays.forEach(function (e) { if (e.rounds && e.rounds.length > maxRounds) maxRounds = e.rounds.length; });
+    var leaderTotal = todays[0].total;
+
+    var html = '<div class="table-scroll"><table class="pivot"><thead><tr><th></th><th>Giocatore</th>';
+    for (var r = 1; r <= maxRounds; r++) html += "<th class='num-cell'>R" + r + "</th>";
+    html += "<th class='num-cell'>Totale</th></tr></thead><tbody>";
+    todays.forEach(function (e, i) {
+      var rankCell = rankCellHtml(i);
+      var isWinner = e.total === leaderTotal;
+      html += "<tr class='" + (isWinner ? "winner" : "") + "'><td class='rank num" + (i < 3 ? " top3" : "") + "'>" + rankCell + "</td><td><div class='player-cell'>" +
+        "<span class='player-name'>" + escapeHtml(e.player) + "</span></div></td>";
+      for (var i2 = 0; i2 < maxRounds; i2++) {
+        var rd = e.rounds && e.rounds[i2];
+        html += "<td class='num-cell num'>" + (rd && rd.score != null ? fmtInt(rd.score) : "<span style='color:var(--muted)'>—</span>") + "</td>";
+      }
+      html += "<td class='num-cell num'>" + fmtInt(e.total) + "</td></tr>";
+    });
+    html += "</tbody></table></div>";
+    pivotBody.innerHTML = html;
+  }
+
+  // ---------- cumulative history: trend chart ----------
+  function renderHistory() {
+    var trendCard = $("trendCard");
+    if (state.entries.length < 2) { trendCard.style.display = "none"; return; }
+    var players = Array.from(new Set(state.entries.map(function (e) { return e.player; }))).sort();
+    var dates = Array.from(new Set(state.entries.map(function (e) { return e.date; }))).sort();
+    if (dates.length < 2) { trendCard.style.display = "none"; return; }
+    trendCard.style.display = "";
+    renderTrend(players, dates);
+  }
+
+  function renderTrend(players, datesAsc) {
+    var chartEl = $("trendChart");
+    var legendEl = $("trendLegend");
+    var byKey = {};
+    state.entries.forEach(function (e) { byKey[e.date + "|" + e.player] = e.total; });
+
+    var w = 640, h = 220, padL = 44, padR = 12, padT = 14, padB = 28;
+    var allVals = state.entries.map(function (e) { return e.total; });
+    var minV = Math.min.apply(null, allVals), maxV = Math.max.apply(null, allVals);
+    if (minV === maxV) { minV = minV - 10; maxV = maxV + 10; }
+    var span = maxV - minV;
+
+    function xAt(i) { return padL + (datesAsc.length <= 1 ? 0 : (i / (datesAsc.length - 1)) * (w - padL - padR)); }
+    function yAt(v) { return padT + (1 - (v - minV) / span) * (h - padT - padB); }
+
+    var gridY = [];
+    var steps = 4;
+    for (var g = 0; g <= steps; g++) {
+      var val = minV + (span * g) / steps;
+      gridY.push({ y: yAt(val), label: fmtInt(val) });
+    }
+
+    var svg = '<svg width="100%" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Andamento punteggi">';
+    gridY.forEach(function (gl) {
+      svg += '<line x1="' + padL + '" x2="' + (w - padR) + '" y1="' + gl.y.toFixed(1) + '" y2="' + gl.y.toFixed(1) + '" stroke="var(--line-soft)" stroke-width="1"/>';
+      svg += '<text x="' + (padL - 8) + '" y="' + (gl.y + 3).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Helvetica, Arial, sans-serif">' + gl.label + "</text>";
+    });
+    datesAsc.forEach(function (d, i) {
+      if (datesAsc.length > 8 && i % Math.ceil(datesAsc.length / 6) !== 0 && i !== datesAsc.length - 1) return;
+      svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Helvetica, Arial, sans-serif">' + fmtDateShort(d) + "</text>";
+    });
+
+    var pointData = [];
+    players.forEach(function (p) {
+      var dash = dashForPlayer(p);
+      var pts = [];
+      datesAsc.forEach(function (d, i) {
+        var v = byKey[d + "|" + p];
+        if (v !== undefined) pts.push({ x: xAt(i), y: yAt(v), v: v, date: d, player: p });
+      });
+      if (pts.length) {
+        var path = pts.map(function (pt, i) { return (i === 0 ? "M" : "L") + pt.x.toFixed(1) + "," + pt.y.toFixed(1); }).join(" ");
+        svg += '<path d="' + path + '" fill="none" stroke="var(--ink)" stroke-width="1.75" stroke-dasharray="' + dash + '" stroke-linecap="round" stroke-linejoin="round"/>';
+        pts.forEach(function (pt) {
+          svg += '<circle class="pt" cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="7" fill="transparent" data-player="' + escapeHtml(pt.player) + '" data-date="' + pt.date + '" data-v="' + pt.v + '"/>';
+          svg += '<circle cx="' + pt.x.toFixed(1) + '" cy="' + pt.y.toFixed(1) + '" r="3" fill="var(--ink)" style="pointer-events:none"/>';
+        });
+      }
+      pointData.push({ player: p, dash: dash });
+    });
+    svg += "</svg>";
+    chartEl.innerHTML = svg;
+
+    var tooltip = $("tooltip");
+    chartEl.querySelectorAll("circle.pt").forEach(function (c) {
+      c.addEventListener("pointerenter", function (ev) {
+        var rect = chartEl.getBoundingClientRect();
+        tooltip.textContent = c.dataset.player + " — " + fmtInt(c.dataset.v) + " pt (" + fmtDateShort(c.dataset.date) + ")";
+        tooltip.style.left = (ev.clientX) + "px";
+        tooltip.style.top = (ev.clientY) + "px";
+        tooltip.classList.add("show");
+      });
+      c.addEventListener("pointermove", function (ev) {
+        tooltip.style.left = (ev.clientX) + "px";
+        tooltip.style.top = (ev.clientY) + "px";
+      });
+      c.addEventListener("pointerleave", function () { tooltip.classList.remove("show"); });
+    });
+
+    legendEl.innerHTML = pointData.map(function (pd) {
+      var swatchSvg = '<svg class="swatch" width="18" height="6" viewBox="0 0 18 6">' +
+        '<line x1="0" y1="3" x2="18" y2="3" stroke="var(--ink)" stroke-width="1.75" stroke-dasharray="' + pd.dash + '"/></svg>';
+      return '<span class="legend-item">' + swatchSvg + escapeHtml(pd.player) + "</span>";
+    }).join("");
+  }
+
+  // ---------- today chip ----------
+  function renderTodayChip() {
+    var t = todayStr();
+    var n = state.entries.filter(function (e) { return e.date === t; }).length;
+    $("todayCount").textContent = n;
+  }
+
+  function renderAll() {
+    renderTodayChip();
+    renderToday();
+    renderLeaderboard();
+    renderHistory();
+  }
+
+  // ---------- add form: rounds (internal state, not shown) ----------
+  function renderRounds() {
+    // Rounds come only from the AI reading of the screenshot — no manual editor.
+    // Kept as a function so the save/reset flow has one place to call.
+  }
+
+  // ---------- add form: file + AI parse ----------
+  var dropzone = $("dropzone"), fileInput = $("fFile"), aiStatus = $("aiStatus");
+  dropzone.addEventListener("click", function () { fileInput.click(); });
+  dropzone.addEventListener("keydown", function (e) { if (e.key === "Enter" || e.key === " ") fileInput.click(); });
+  ["dragover", "dragenter"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) { e.preventDefault(); dropzone.classList.add("drag"); });
+  });
+  ["dragleave", "drop"].forEach(function (ev) {
+    dropzone.addEventListener(ev, function (e) { e.preventDefault(); dropzone.classList.remove("drag"); });
+  });
+  dropzone.addEventListener("drop", function (e) {
+    var f = e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) setFile(f);
+  });
+  fileInput.addEventListener("change", function () {
+    if (fileInput.files && fileInput.files[0]) setFile(fileInput.files[0]);
+  });
+
+  // ---------- manual fallback (AI read unavailable/failing, or the person just prefers typing it) ----------
+  var manualToggle = $("manualToggle"), manualFields = $("manualFields"), fTotalInput = $("fTotal");
+  manualToggle.addEventListener("click", function () {
+    manualFields.hidden = false;
+    manualToggle.hidden = true;
+    fTotalInput.focus();
+  });
+  fTotalInput.addEventListener("input", function () {
+    var v = Number(fTotalInput.value);
+    if (fTotalInput.value && v > 0) {
+      autoSaveArmed = true;
+      $("saveBtn").disabled = false;
+      tryAutoSave();
+    } else {
+      autoSaveArmed = false;
+      $("saveBtn").disabled = true;
+    }
+  });
+
+  var autoSaveArmed = false; // true once a total (AI-read or typed) is ready for the current entry and hasn't been saved yet
+  var analyzeStarted = false; // true once analyzeFileGemini() has been kicked off for the current pendingFile
+
+  function setFile(f) {
+    pendingFile = f;
+    autoSaveArmed = false;
+    analyzeStarted = false;
+    var url = URL.createObjectURL(f);
+    $("dropzoneContent").innerHTML = '<img class="thumb" src="' + url + '" alt="Anteprima screenshot">' +
+      '<p class="fname">' + escapeHtml(f.name) + "</p>";
+    aiStatus.textContent = "";
+    $("saveBtn").disabled = true;
+    $("fTotal").value = ""; $("fMode").value = ""; rounds = []; renderRounds();
+    analyzeFileGemini();
+  }
+
+  var analyzeToken = 0; // bumped on every analyzeFileGemini() call; stale timeouts/responses check against it before touching the UI
+
+  function fileToBase64(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () {
+        var result = String(reader.result || "");
+        var idx = result.indexOf(",");
+        resolve(idx >= 0 ? result.slice(idx + 1) : result);
+      };
+      reader.onerror = function () { reject(new Error("file read failed")); };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function analyzeFileGemini() {
+    if (!pendingFile) return;
+    analyzeStarted = true;
+    var myToken = ++analyzeToken;
+
+    if (!GEMINI_API_KEY || GEMINI_API_KEY.indexOf("INCOLLA_QUI") === 0) {
+      aiStatus.textContent = "Lettura automatica non configurata (manca la chiave Gemini) — inserisci il punteggio qui sotto.";
+      manualFields.hidden = false;
+      manualToggle.hidden = true;
+      fTotalInput.focus();
+      return;
+    }
+
+    aiStatus.innerHTML = '<span class="spinner"></span> Sto leggendo lo screenshot…';
+    $("saveBtn").disabled = true;
+
+    // Technical-time guard: the AI read should never leave the UI stuck on the spinner.
+    var timeoutId = setTimeout(function () {
+      if (myToken !== analyzeToken) return;
+      aiStatus.innerHTML = "La lettura sta impiegando troppo tempo. " +
+        '<button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
+      var retryBtn = $("retryAnalyze");
+      if (retryBtn) retryBtn.addEventListener("click", function () { analyzeFileGemini(); });
+    }, 25000);
+
+    var prompt = "Questa e' uno screenshot di un riepilogo punteggi del gioco GeoGuessr (una daily challenge o una partita), " +
+      "ma il layout grafico puo' variare molto: a volte e' una striscia di 5 pin numerati con il punteggio sotto ciascuno e il totale a fianco; " +
+      "altre volte e' una scheda con 'Round 1'...'Round 5' ciascuno con punti, distanza e tempo; altre volte e' una riga compatta con 5 numeri " +
+      "(i punteggi dei round) seguita da una riga di distanze (in km o m) e una di tempi. Leggi SEMPRE tutti e 5 i punteggi dei round quando sono " +
+      "visibili, non solo il totale: sono fondamentali. Il nome del giocatore puo' comparire come intestazione sopra la scheda (es. un nome e cognome), " +
+      "mentre dentro la scheda puo' comparire l'etichetta generica 'You' o 'Tu' — in quel caso usa come player il nome proprio dell'intestazione, " +
+      "NON la parola 'You'/'Tu'. Se non c'e' nessun nome proprio visibile lascia player null. " +
+      "Rispondi SOLO con un oggetto JSON, senza testo prima o dopo, con questa forma esatta: " +
+      '{"total": number|null, "date": string|null, "player": string|null, "mode": string|null, "rounds": [{"score": number, "km": number|null}]}. ' +
+      "\"total\" e' il punteggio complessivo finale (di solito la somma dei 5 round). \"date\" in formato YYYY-MM-DD se e' leggibile una data, altrimenti null. " +
+      "\"mode\" e' il nome della modalita' di gioco se visibile (es. 'Daily Challenge', 'World'), altrimenti null. " +
+      "\"rounds\" e' l'elenco ORDINATO dei 5 round con punteggio e distanza in km (converti i metri in km, es. '42 m' diventa 0.042); " +
+      "lascia l'array vuoto solo se davvero nessun punteggio di round e' leggibile. " +
+      "Se un valore non e' leggibile con certezza usa null invece di inventarlo — non arrotondare o stimare numeri che non riesci a leggere chiaramente.";
+
+    fileToBase64(pendingFile).then(function (b64) {
+      if (myToken !== analyzeToken) return Promise.reject({ stale: true });
+      var body = {
+        contents: [{
+          parts: [
+            { text: prompt },
+            { inline_data: { mime_type: pendingFile.type || "image/png", data: b64 } }
+          ]
+        }],
+        generationConfig: { responseMimeType: "application/json" }
+      };
+      return fetch("https://generativelanguage.googleapis.com/v1beta/models/" + GEMINI_MODEL + ":generateContent?key=" + GEMINI_API_KEY, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      }).then(function (r) {
+        if (!r.ok) return r.json().catch(function () { return null; }).then(function (errBody) {
+          return Promise.reject({ http: r.status, body: errBody });
+        });
+        return r.json();
+      });
+    }).then(function (resp) {
+      clearTimeout(timeoutId);
+      if (myToken !== analyzeToken) return; // a newer screenshot/analysis superseded this one
+      var text = resp && resp.candidates && resp.candidates[0] && resp.candidates[0].content &&
+        resp.candidates[0].content.parts && resp.candidates[0].content.parts[0] && resp.candidates[0].content.parts[0].text;
+      var data = null;
+      try { data = JSON.parse(text); } catch (parseErr) { data = null; }
+      var gotTotal = false, roundCount = 0;
+      if (data && typeof data === "object") {
+        if (data.total != null && !isNaN(Number(data.total))) { $("fTotal").value = Math.round(Number(data.total)); gotTotal = true; }
+        if (data.player) tryPreselectPlayer(String(data.player));
+        if (data.mode) $("fMode").value = String(data.mode).slice(0, 60);
+        if (Array.isArray(data.rounds) && data.rounds.length) {
+          rounds = data.rounds.slice(0, 8).map(function (r) {
+            return { score: r && r.score != null && !isNaN(Number(r.score)) ? Math.round(Number(r.score)) : null,
+                     km: r && r.km != null && !isNaN(Number(r.km)) ? Number(r.km) : null };
+          });
+          renderRounds();
+          roundCount = rounds.filter(function (r) { return r.score != null; }).length;
+        }
+      }
+      if (gotTotal) {
+        autoSaveArmed = true;
+        aiStatus.textContent = "Letto: " + fmtInt(Number($("fTotal").value)) + " punti" +
+          (roundCount ? " su " + roundCount + " round." : ".");
+        $("saveBtn").disabled = false;
+        tryAutoSave();
+      } else {
+        aiStatus.innerHTML = "Non sono riuscito a leggere il punteggio — prova con un altro screenshot, più leggibile, oppure " +
+          '<button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
+        var retryBtn2 = $("retryAnalyze");
+        if (retryBtn2) retryBtn2.addEventListener("click", function () { analyzeFileGemini(); });
+        manualFields.hidden = false;
+        manualToggle.hidden = true;
+        $("saveBtn").disabled = true;
+      }
+    }).catch(function (e) {
+      clearTimeout(timeoutId);
+      if (myToken !== analyzeToken || (e && e.stale)) return;
+      var msg = "Non sono riuscito a leggere lo screenshot — riprova.";
+      if (e && e.http === 429) msg = "Troppe richieste a Gemini per ora — riprova tra poco, o inserisci il punteggio qui sotto.";
+      else if (e && e.http === 400) msg = "Immagine non valida o richiesta rifiutata — prova con un altro screenshot, o inserisci il punteggio qui sotto.";
+      else if (e && e.http === 403) msg = "Chiave Gemini non valida o senza permessi — controlla la configurazione, o inserisci il punteggio qui sotto.";
+      aiStatus.innerHTML = msg + ' <button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
+      var retryBtn3 = $("retryAnalyze");
+      if (retryBtn3) retryBtn3.addEventListener("click", function () { analyzeFileGemini(); });
+      manualFields.hidden = false;
+      manualToggle.hidden = true;
+      $("saveBtn").disabled = true;
+    });
+  }
+
+  // ---------- save ----------
+  var addBanner = $("addBanner");
+  function showBanner(msg, type) {
+    var tag = type === "error" ? "Errore — " : type === "success" ? "Fatto — " : "";
+    addBanner.innerHTML = '<div class="banner' + (type ? " " + type : "") + '">' +
+      (tag ? '<span class="tag">' + tag + '</span>' : "") + escapeHtml(msg) + "</div>";
+  }
+
+  function saveEntry() {
+    if (!state.db) { showBanner("Il database condiviso non è disponibile in questa vista.", "error"); return; }
+    var player = $("fPlayer").value.trim();
+    var date = todayStr();
+    var total = Number($("fTotal").value);
+    if (!player || player === "__new__") { showBanner("Scegli il tuo nome dall'elenco.", "error"); return; }
+    if (!total) { showBanner("Carica uno screenshot leggibile.", "error"); return; }
+    autoSaveArmed = false;
+    var cleanRounds = rounds.filter(function (r) { return r.score != null; }).map(function (r) {
+      return { score: Math.round(r.score), km: r.km != null ? r.km : null };
+    });
+    var saveBtn = $("saveBtn");
+    saveBtn.disabled = true; saveBtn.textContent = "Caricamento…";
+    var id = date + "__" + slugify(player);
+    state.db.collection("entries").doc(id).set({
+      date: date, player: player, total: Math.round(total),
+      mode: $("fMode").value.trim() || null,
+      rounds: cleanRounds,
+      updatedAt: new Date().toISOString()
+    }).then(function () {
+      showBanner("Punteggio salvato. Guarda la classifica aggiornata.", "success");
+      try { localStorage.setItem("plonkclub_name", player); } catch (err) {}
+      rounds = []; renderRounds();
+      pendingFile = null;
+      $("dropzoneContent").innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="margin:0 auto"><path d="M4 16V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v12" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><p>Trascina qui l\'immagine o tocca per scegliere</p>';
+      aiStatus.textContent = "";
+      $("fTotal").value = "";
+      $("fMode").value = "";
+      saveBtn.disabled = true;
+      saveBtn.textContent = "Carica";
+    }).catch(function () {
+      showBanner("Non sono riuscito a salvare — riprova tra poco.", "error");
+      autoSaveArmed = true; // let a retry (manual click or next auto-trigger) try again
+      saveBtn.disabled = false;
+      saveBtn.textContent = "Carica";
+    });
+  }
+
+  // Saves the moment both the screenshot has been read AND a player name is set —
+  // so picking a name (or the AI already having matched one) is the only thing
+  // standing between "drop the screenshot" and "it's on the leaderboard".
+  function tryAutoSave() {
+    if (!autoSaveArmed) return;
+    var player = playerSelect.value;
+    if (!player || player === "__new__") {
+      var current = aiStatus.textContent;
+      if (current && current.indexOf("Scegli il tuo nome") === -1) {
+        aiStatus.textContent = current + " Scegli il tuo nome qui sopra per salvarlo.";
+      }
+      return;
+    }
+    saveEntry();
+  }
+
+  $("addForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+    saveEntry();
+  });
+
+  // ---------- player roster: dropdown + add-new ----------
+  var playerSelect = $("fPlayer"), playerNewInput = $("fPlayerNew");
+  state.players = [];
+  var rememberedName = "";
+
+  function renderPlayerOptions(selectName) {
+    var names = state.players.slice().sort(function (a, b) { return a.localeCompare(b, "it"); });
+    var current = selectName !== undefined ? selectName : playerSelect.value;
+    if (current === "__new__") current = "";
+    var html = '<option value="" disabled' + (current ? "" : " selected") + '>Scegli il tuo nome…</option>';
+    names.forEach(function (n) {
+      html += '<option value="' + escapeHtml(n) + '"' + (n === current ? " selected" : "") + '>' + escapeHtml(n) + "</option>";
+    });
+    html += '<option value="__new__">+ Aggiungi nuovo giocatore</option>';
+    playerSelect.innerHTML = html;
+    playerSelect.hidden = false;
+    playerNewInput.hidden = true;
+  }
+
+  function tryPreselectPlayer(name) {
+    if (!name || playerSelect.value) return;
+    var match = state.players.filter(function (p) { return p.toLowerCase() === String(name).toLowerCase(); })[0];
+    if (match) { renderPlayerOptions(match); tryAutoSave(); }
+  }
+
+  playerSelect.addEventListener("change", function () {
+    if (playerSelect.value === "__new__") {
+      playerSelect.hidden = true;
+      playerNewInput.hidden = false;
+      playerNewInput.value = "";
+      playerNewInput.focus();
+    } else {
+      tryAutoSave();
+    }
+  });
+
+  function commitNewPlayer() {
+    var name = playerNewInput.value.trim().slice(0, 60);
+    if (!name) { renderPlayerOptions(""); return; }
+    if (state.players.indexOf(name) === -1) {
+      state.players.push(name);
+      if (state.db) state.db.collection("players").doc(slugify(name)).set({ name: name }).catch(function () {});
+    }
+    renderPlayerOptions(name);
+    tryAutoSave();
+  }
+  playerNewInput.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") { e.preventDefault(); commitNewPlayer(); }
+    if (e.key === "Escape") { e.preventDefault(); renderPlayerOptions(""); }
+  });
+  playerNewInput.addEventListener("blur", commitNewPlayer);
+
+  // ---------- init ----------
+  function init() {
+    $("fDate").value = todayStr();
+    try { rememberedName = localStorage.getItem("plonkclub_name") || ""; } catch (err) {}
+    renderPlayerOptions();
+    renderRounds();
+    renderAll();
+
+    if (!firebaseConfig.apiKey || firebaseConfig.apiKey.indexOf("INCOLLA_QUI") === 0) {
+      showBanner("Configurazione Firebase mancante — apri plonk-club.html e incolla la tua firebaseConfig in cima allo script.", "error");
+      return;
+    }
+
+    state.db = firebase.firestore();
+
+    state.db.collection("players").onSnapshot(function (snap) {
+      state.players = snap.docs.map(function (d) { var v = d.data(); return v && v.name; }).filter(Boolean);
+      renderPlayerOptions();
+      tryPreselectPlayer(rememberedName);
+    }, function () {
+      showBanner("Non riesco a leggere l'elenco giocatori in questo momento.", "error");
+    });
+
+    state.db.collection("entries").orderBy("date", "desc").limit(500).onSnapshot(function (snap) {
+      state.entries = snap.docs.map(function (d) { return d.data(); }).filter(function (e) { return e && e.date && e.player && typeof e.total === "number"; });
+      renderAll();
+    }, function () {
+      showBanner("Non riesco a leggere i punteggi condivisi in questo momento.", "error");
+    });
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+})();
+</script>
+
+</body>
+</html>
