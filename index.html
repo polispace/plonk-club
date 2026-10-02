@@ -12,6 +12,7 @@
   // which still uses the compat Firestore SDK and isn't a module itself.
   import { initializeApp } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app.js";
   import { getAI, getGenerativeModel, GoogleAIBackend } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-ai.js";
+  import { initializeAppCheck, ReCaptchaEnterpriseProvider } from "https://www.gstatic.com/firebasejs/12.19.0/firebase-app-check.js";
 
   var firebaseConfigForAI = {
     apiKey: "AIzaSyAZ5FiBtbC-W_QkFMOJq-ZU0hfwajwfzSs",
@@ -22,6 +23,15 @@
     appId: "1:908463019187:web:adafc04ad056c22416ccc6"
   };
   var aiApp = initializeApp(firebaseConfigForAI, "ai-logic");
+  // App Check (Fraud Defense / reCAPTCHA Enterprise): proves the requests come from this
+  // site. The site key is public by design; it is bound to the polispace.github.io domain.
+  // Required by Firebase for AI Logic from 2 Nov 2026.
+  try {
+    initializeAppCheck(aiApp, {
+      provider: new ReCaptchaEnterpriseProvider("6LdGNdstAAAAAP4cwtBEOu10kqByWZnOKsQPbPgB"),
+      isTokenAutoRefreshEnabled: true
+    });
+  } catch (e) { console.warn("App Check init failed", e); }
   var ai = getAI(aiApp, { backend: new GoogleAIBackend() });
   // Tried in order: when Google reports a model overloaded ("high demand", 5xx) or
   // retired (404), the next one is used, so a demand spike on one model doesn't
