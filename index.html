@@ -33,29 +33,61 @@
     });
   } catch (e) { console.warn("App Check init failed", e); }
   var ai = getAI(aiApp, { backend: new GoogleAIBackend() });
-  // Tried in order: when Google reports a model overloaded ("high demand", 5xx) or
-  // retired (404), the next one is used, so a demand spike on one model doesn't
-  // break the screenshot read.
-  var MODELS = ["gemini-3.8-flash", "gemini-3.5-flash", "gemini-flash-latest"];
-  var models = MODELS.map(function (name) {
+  // Models are tried fastest-first. Measured on the live site: the "lite" model reads a
+  // score bar in ~1-2 s, gemini-3.5-flash with minimal thinking in ~10 s, gemini-3.8-flash
+  // is often overloaded (500 after ~35 s) or out of free quota. Each attempt has its own
+  // timeout, and an answer is accepted only if it adds up (sum of rounds == total);
+  // otherwise the next, stronger model double-checks it.
+  var MODEL_SPECS = [
+    { name: "gemini-flash-lite-latest", cfg: {} },
+    { name: "gemini-3.5-flash", cfg: { thinkingConfig: { thinkingLevel: "MINIMAL" } } },
+    { name: "gemini-3.8-flash", cfg: {} }
+  ];
+  var models = MODEL_SPECS.map(function (spec) {
     return getGenerativeModel(ai, {
-      model: name,
-      generationConfig: { responseMimeType: "application/json" }
-    });
+      model: spec.name,
+      generationConfig: Object.assign({ responseMimeType: "application/json" }, spec.cfg)
+    }, { timeout: 15000 });
   });
 
   function isRetryable(err) {
     var msg = String(err && err.message || err);
-    return /\[(5\d\d|404|429)\s*\]|high demand|overloaded|unavailable|no longer available/i.test(msg);
+    return /\[(5\d\d|404|429)\s*\]|high demand|overloaded|unavailable|no longer available|timeout|timed out|abort|failed to fetch|network/i.test(msg);
+  }
+
+  // true when the reply is usable as-is: has a total, and the rounds (if any) sum to it
+  function looksConsistent(text) {
+    try {
+      var d = JSON.parse(text);
+      if (!d || d.total == null || isNaN(Number(d.total))) return false;
+      if (!Array.isArray(d.rounds) || !d.rounds.length) return true;
+      var sum = 0;
+      for (var k = 0; k < d.rounds.length; k++) {
+        var sc = d.rounds[k] && d.rounds[k].score;
+        if (sc == null || isNaN(Number(sc))) return false;
+        sum += Number(sc);
+      }
+      return Math.round(sum) === Math.round(Number(d.total));
+    } catch (e) { return false; }
   }
 
   window.callGeminiAI = function (prompt, mimeType, base64Data) {
     var parts = [prompt, { inlineData: { mimeType: mimeType, data: base64Data } }];
+    var fallbackText = null, lastErr = null;
     function attempt(i) {
+      if (i >= models.length) {
+        if (fallbackText !== null) return Promise.resolve(fallbackText);
+        return Promise.reject(lastErr || new Error("AI read failed"));
+      }
       return models[i].generateContent(parts).then(function (result) {
-        return result.response.text();
+        var text = result.response.text();
+        if (looksConsistent(text)) return text;
+        if (fallbackText === null) fallbackText = text; // keep the first answer in case nobody does better
+        return attempt(i + 1);
       }).catch(function (err) {
-        if (i + 1 < models.length && isRetryable(err)) return attempt(i + 1);
+        lastErr = err;
+        if (isRetryable(err)) return attempt(i + 1);
+        if (fallbackText !== null) return fallbackText;
         throw err;
       });
     }
@@ -757,6 +789,27 @@
 
   var analyzeToken = 0; // bumped on every analyzeFileGemini() call; stale timeouts/responses check against it before touching the UI
 
+  // Big screenshots (e.g. 3 MB PNGs from a phone or a retina Mac) are re-encoded as JPEG at
+  // (almost) full resolution before upload: ~5x smaller, same legible digits. Small files and
+  // anything that fails to decode are sent untouched.
+  function prepareImage(file) {
+    return new Promise(function (resolve) {
+      if (!file || file.size < 800 * 1024 || !/^image\/(png|webp|bmp)$/i.test(file.type || "")) { resolve(file); return; }
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onload = function () {
+        try {
+          var maxSide = 2400, sc = Math.min(1, maxSide / Math.max(img.naturalWidth, img.naturalHeight));
+          var c = document.createElement("canvas");
+          c.width = Math.round(img.naturalWidth * sc); c.height = Math.round(img.naturalHeight * sc);
+          c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
+          c.toBlob(function (blob) { URL.revokeObjectURL(url); resolve(blob && blob.size < file.size ? blob : file); }, "image/jpeg", 0.9);
+        } catch (e) { URL.revokeObjectURL(url); resolve(file); }
+      };
+      img.onerror = function () { URL.revokeObjectURL(url); resolve(file); };
+      img.src = url;
+    });
+  }
+
   function fileToBase64(file) {
     return new Promise(function (resolve, reject) {
       var reader = new FileReader();
@@ -802,10 +855,14 @@
       "lascia l'array vuoto solo se davvero nessun punteggio di round e' leggibile. " +
       "Se un valore non e' leggibile con certezza usa null invece di inventarlo — non arrotondare o stimare numeri che non riesci a leggere chiaramente.";
 
-    fileToBase64(pendingFile).then(function (b64) {
+    var sendType = "image/png";
+    prepareImage(pendingFile).then(function (f) {
+      sendType = f.type || pendingFile.type || "image/png";
+      return fileToBase64(f);
+    }).then(function (b64) {
       if (myToken !== analyzeToken) return Promise.reject({ stale: true });
       if (!window.callGeminiAI) return Promise.reject({ notReady: true });
-      return window.callGeminiAI(prompt, pendingFile.type || "image/png", b64).then(function (text) {
+      return window.callGeminiAI(prompt, sendType, b64).then(function (text) {
         return { candidates: [{ content: { parts: [{ text: text }] } }] };
       }).catch(function (err) {
         return Promise.reject({ http: null, body: { error: { message: String(err && err.message || err) } } });
