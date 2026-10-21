@@ -245,6 +245,11 @@
     border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
   .geo-step { display: flex; flex-direction: column; gap: 3px; padding: 9px 8px 9px 0; }
   .geo-pts { font-size: 1.2rem; font-weight: 700; line-height: 1; color: var(--accent); }
+  .geo-scale.podium { grid-template-columns: repeat(6, 1fr); }
+  @media (max-width: 560px) {
+    .geo-scale.podium { grid-template-columns: repeat(3, 1fr); }
+    .geo-scale.podium .geo-step { border-bottom: none; }
+  }
   .geo-caption { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
   .geo-range { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
   @media (max-width: 560px) {
@@ -438,15 +443,21 @@
     <section id="panel-leaderboard" class="panel">
       <div class="card" id="leaderboardCard">
         <h2>Classifica</h2>
-        <p class="sub">Ultimi 30 giorni. Ogni partita vale da 1 a 5 Geopoints, un giorno senza partita vale 0.</p>
+        <p class="sub">Ultimi 15 giorni. Ogni partita vale da 1 a 5 Geopoints, più un bonus se sei sul podio del giorno. Un giorno senza partita vale 0.</p>
         <p class="geo-caption">Geopoints per partita</p>
         <div class="geo-scale" aria-label="Geopoints per partita">
           <div class="geo-step"><span class="geo-pts num">0</span><span class="geo-range">non giocata</span></div>
-          <div class="geo-step"><span class="geo-pts num">1</span><span class="geo-range num">sotto 12.000 punti</span></div>
-          <div class="geo-step"><span class="geo-pts num">2</span><span class="geo-range num">da 12.000</span></div>
-          <div class="geo-step"><span class="geo-pts num">3</span><span class="geo-range num">da 16.000</span></div>
-          <div class="geo-step"><span class="geo-pts num">4</span><span class="geo-range num">da 19.000</span></div>
-          <div class="geo-step"><span class="geo-pts num">5</span><span class="geo-range num">da 22.000</span></div>
+          <div class="geo-step"><span class="geo-pts num">1</span><span class="geo-range num">sotto 14.000 punti</span></div>
+          <div class="geo-step"><span class="geo-pts num">2</span><span class="geo-range num">da 14.000</span></div>
+          <div class="geo-step"><span class="geo-pts num">3</span><span class="geo-range num">da 16.500</span></div>
+          <div class="geo-step"><span class="geo-pts num">4</span><span class="geo-range num">da 18.500</span></div>
+          <div class="geo-step"><span class="geo-pts num">5</span><span class="geo-range num">da 20.500</span></div>
+        </div>
+        <p class="geo-caption">Bonus podio del giorno</p>
+        <div class="geo-scale podium" aria-label="Bonus podio del giorno">
+          <div class="geo-step"><span class="geo-pts num">+3</span><span class="geo-range">1° del giorno</span></div>
+          <div class="geo-step"><span class="geo-pts num">+2</span><span class="geo-range">2° del giorno</span></div>
+          <div class="geo-step"><span class="geo-pts num">+1</span><span class="geo-range">3° del giorno</span></div>
         </div>
         <div id="leaderboardBody"></div>
         <p class="note">A parità vince la media più alta. Chi non gioca per 15 giorni esce dalla classifica e rientra alla prima partita.</p>
@@ -527,22 +538,30 @@
         <p>Ogni partita vale da 1 a 5 Geopoints in base ai punti fatti:</p>
         <ul class="geo-list">
           <li><b class="num">0 Geopoints</b> non hai giocato</li>
-          <li><b class="num">1 Geopoint</b> sotto 12.000 punti</li>
-          <li><b class="num">2 Geopoints</b> da 12.000 punti</li>
-          <li><b class="num">3 Geopoints</b> da 16.000 punti</li>
-          <li><b class="num">4 Geopoints</b> da 19.000 punti</li>
-          <li><b class="num">5 Geopoints</b> da 22.000 punti</li>
+          <li><b class="num">1 Geopoint</b> sotto 14.000 punti</li>
+          <li><b class="num">2 Geopoints</b> da 14.000 punti</li>
+          <li><b class="num">3 Geopoints</b> da 16.500 punti</li>
+          <li><b class="num">4 Geopoints</b> da 18.500 punti</li>
+          <li><b class="num">5 Geopoints</b> da 20.500 punti</li>
         </ul>
-        <p>La classifica somma i Geopoints degli ultimi 30 giorni: conta giocare bene, ma anche giocare spesso.</p>
 
-        <h3>Sempre gli ultimi 30 giorni</h3>
-        <p>La classifica non si azzera mai. Conta sempre gli ultimi 30 giorni, oggi compreso: ogni giorno entra la daily nuova ed esce quella di 30 giorni prima. Vale per tutto: Geopoints, media, vittorie, record e grafico.</p>
+        <h3>Podio del giorno</h3>
+        <p>I tre migliori punteggi di ogni daily prendono un bonus:</p>
+        <ul class="geo-list">
+          <li><b class="num">+3 Geopoints</b> al primo</li>
+          <li><b class="num">+2 Geopoints</b> al secondo</li>
+          <li><b class="num">+1 Geopoint</b> al terzo</li>
+        </ul>
+        <p>In una giornata puoi fare da 0 a 8 Geopoints. La classifica li somma sugli ultimi 15 giorni: conta giocare bene, ma anche giocare spesso.</p>
+
+        <h3>Sempre gli ultimi 15 giorni</h3>
+        <p>La classifica non si azzera mai. Conta sempre gli ultimi 15 giorni, oggi compreso: ogni giorno entra la daily nuova ed esce quella di 15 giorni prima. Vale per tutto: Geopoints, media, vittorie, record e grafico.</p>
 
         <h3>Le altre colonne</h3>
         <ul class="col-list">
           <li><b>Media</b> il punteggio medio delle tue partite. Decide a parità di Geopoints.</li>
-          <li><b>🏆 Vittorie</b> quante daily hai vinto negli ultimi 30 giorni. Vinci una daily quando fai più punti di tutti quel giorno.</li>
-          <li><b>Record</b> il tuo miglior punteggio degli ultimi 30 giorni.</li>
+          <li><b>🏆 Vittorie</b> quante daily hai vinto negli ultimi 15 giorni. Vinci una daily quando fai più punti di tutti quel giorno.</li>
+          <li><b>Record</b> il tuo miglior punteggio degli ultimi 15 giorni.</li>
         </ul>
 
         <h3>Se ti fermi</h3>
@@ -665,10 +684,13 @@
   }
 
   // ---------- derived stats ----------
-  // Geopoints thresholds: 1 below 12,000 - 2 from 12,000 - 3 from 16,000 - 4 from 19,000 - 5 from 22,000
+  // Geopoints thresholds: 1 below 14,000 - 2 from 14,000 - 3 from 16,500 - 4 from 18,500 - 5 from 20,500
+  // (calibrated on the group's games so each level comes up about as often).
   function geoPoints(total) {
-    return total >= 22000 ? 5 : total >= 19000 ? 4 : total >= 16000 ? 3 : total >= 12000 ? 2 : 1;
+    return total >= 20500 ? 5 : total >= 18500 ? 4 : total >= 16500 ? 3 : total >= 14000 ? 2 : 1;
   }
+  // Daily podium bonus: +3 / +2 / +1 for the three best totals of each day (ties share the place).
+  var PODIUM_BONUS = [3, 2, 1];
   function computeStats() {
     var byPlayer = {};
     state.entries.forEach(function (e) {
@@ -686,13 +708,20 @@
       if (e.total === maxByDate[e.date]) winsByPlayer[e.player] = (winsByPlayer[e.player] || 0) + 1;
     });
 
-    // Geopoints: each game earns 1-5 points from its total; a day not played earns 0.
+    var totalsByDate = {};
+    state.entries.forEach(function (e) { (totalsByDate[e.date] = totalsByDate[e.date] || []).push(e.total); });
+    function podiumBonus(e) {
+      var better = totalsByDate[e.date].filter(function (t) { return t > e.total; }).length;
+      return better < PODIUM_BONUS.length ? PODIUM_BONUS[better] : 0;
+    }
+
+    // Geopoints: each game earns 1-5 points from its total, plus the podium bonus; a day not played earns 0.
     var rows = Object.keys(byPlayer).map(function (name) {
       var list = byPlayer[name];
       var totals = list.map(function (e) { return e.total; });
       var sum = totals.reduce(function (a, b) { return a + b; }, 0);
       var geo = 0;
-      totals.forEach(function (t) { geo += geoPoints(t); });
+      list.forEach(function (e) { geo += geoPoints(e.total) + podiumBonus(e); });
       return {
         name: name,
         games: list.length,
@@ -719,9 +748,9 @@
     }
     var rows = computeStats();
     var html = '<div class="table-scroll"><table class="lb"><thead><tr>' +
-      "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Punti Geopoints negli ultimi 30 giorni'>Geopoints</th>" +
+      "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Geopoints negli ultimi 15 giorni'>Geopoints</th>" +
       "<th class='num-cell' title='Punteggio medio delle partite giocate'>Media</th>" +
-      "<th class='num-cell' title='Daily vinte negli ultimi 30 giorni'>🏆</th><th class='num-cell' title='Miglior punteggio degli ultimi 30 giorni'>Record</th>" +
+      "<th class='num-cell' title='Daily vinte negli ultimi 15 giorni'>🏆</th><th class='num-cell' title='Miglior punteggio degli ultimi 15 giorni'>Record</th>" +
       "</tr></thead><tbody>";
     rows.forEach(function (r, i) {
       var rankCell = rankCellHtml(i);
@@ -1255,9 +1284,9 @@
       showBanner("Dati non disponibili. Ricarica la pagina.", "error");
     });
 
-    // Only the last 30 days are loaded: keeps Firestore reads (free-tier quota) bounded
+    // Only the last 15 days are loaded: that is the leaderboard window, and it keeps Firestore reads bounded
     // no matter how long the history grows.
-    var cutoffD = new Date(); cutoffD.setDate(cutoffD.getDate() - 29);
+    var cutoffD = new Date(); cutoffD.setDate(cutoffD.getDate() - 14);
     var cutoff = new Date(cutoffD.getTime() - cutoffD.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     state.db.collection("entries").where("date", ">=", cutoff).orderBy("date", "desc").limit(700).onSnapshot(function (snap) {
       var all = snap.docs.map(function (d) { return d.data(); }).filter(function (e) { return e && e.date && e.player && typeof e.total === "number"; });
