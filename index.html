@@ -114,7 +114,9 @@
     --ink: #000000;
     --ink-2: #4a4a4a;
     --muted: #767676;
-    --line: #000000;
+    --accent: var(--accent-l, #000000);
+    --accent-ink: #ffffff;
+    --line: var(--accent);
     --line-soft: #d4d4d4;
     --s1: #2a78d6;
     --s2: #eb6834;
@@ -134,7 +136,9 @@
       --ink: #ffffff;
       --ink-2: #c7c7c7;
       --muted: #8c8c8c;
-      --line: #ffffff;
+      --accent: var(--accent-d, #ffffff);
+      --accent-ink: #000000;
+      --line: var(--accent);
       --line-soft: #3a3a3a;
       --s1: #3987e5;
       --s2: #d95926;
@@ -154,7 +158,9 @@
     --ink: #ffffff;
     --ink-2: #c7c7c7;
     --muted: #8c8c8c;
-    --line: #ffffff;
+    --accent: var(--accent-d, #ffffff);
+    --accent-ink: #000000;
+    --line: var(--accent);
     --line-soft: #3a3a3a;
     --s1: #3987e5;
     --s2: #d95926;
@@ -187,15 +193,20 @@
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .brand svg { flex: none; }
   .brand h1 {
-    font-size: 1.7rem; font-weight: 800; margin: 0; letter-spacing: -0.025em; line-height: 1.05;
+    font-size: 1.7rem; font-weight: 800; margin: 0; letter-spacing: -0.025em; line-height: 1.05; color: var(--accent);
   }
-  .brand p { margin: 3px 0 0; font-size: 0.82rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .brand p { margin: 3px 0 0; font-size: 0.82rem; color: var(--ink-2); }
   .today-chip {
     flex: none; display: flex; flex-direction: column; align-items: flex-end;
-    font-size: 0.68rem; color: var(--muted); text-align: right; gap: 2px;
-    text-transform: uppercase; letter-spacing: 0.04em;
+    text-align: right; gap: 3px;
   }
-  .today-chip .n { font-size: 1.7rem; color: var(--ink); font-weight: 800; letter-spacing: -0.02em; line-height: 1; order: -1; }
+  .today-chip .date { font-size: 0.82rem; font-weight: 700; color: var(--ink); white-space: nowrap; }
+  .today-chip .count { font-size: 0.82rem; color: var(--ink-2); white-space: nowrap; }
+  .today-chip .n { font-weight: 800; color: var(--accent); }
+  @media (max-width: 480px) {
+    .topbar { align-items: flex-start; }
+    .today-chip .date, .today-chip .count { font-size: 0.74rem; }
+  }
 
   .tabs {
     display: flex; gap: 0; border-bottom: 2px solid var(--line); margin-bottom: 24px;
@@ -208,7 +219,8 @@
     min-height: 44px;
   }
   .tab:hover { color: var(--ink); }
-  .tab.active { color: var(--ink); border-bottom-color: var(--ink); }
+  @media (max-width: 480px) { .tab { font-size: 0.72rem; letter-spacing: 0.02em; } }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   .panel { display: none; }
   .panel.active { display: block; }
@@ -221,10 +233,19 @@
     font-size: 0.78rem; margin: 0 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
   }
   .card .sub { font-size: 0.8rem; color: var(--ink-2); margin: 0 0 16px; }
+  .card .note { font-size: 0.76rem; color: var(--muted); margin: 16px 0 0; }
+  .card .note a, .rules a { color: var(--accent); font-weight: 700; }
+  .steps { margin: 0 0 12px; padding-left: 1.3em; font-size: 0.86rem; color: var(--ink); }
+  .steps li { margin: 4px 0; padding-left: 2px; }
+  .steps li::marker { color: var(--accent); font-weight: 800; }
+  .example { margin: 0 0 14px; }
+  .example img { display: block; width: 100%; max-width: 432px; height: auto; }
+  .example figcaption { font-size: 0.74rem; color: var(--muted); margin-top: 6px; }
   .geo-scale { display: grid; grid-template-columns: repeat(6, 1fr); margin: -4px 0 20px;
     border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
   .geo-step { display: flex; flex-direction: column; gap: 3px; padding: 9px 8px 9px 0; }
-  .geo-pts { font-size: 1.2rem; font-weight: 700; line-height: 1; }
+  .geo-pts { font-size: 1.2rem; font-weight: 700; line-height: 1; color: var(--accent); }
+  .geo-caption { font-size: 0.66rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); margin: 0 0 6px; }
   .geo-range { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
   @media (max-width: 560px) {
     .geo-scale { grid-template-columns: repeat(3, 1fr); }
@@ -240,7 +261,7 @@
   .empty p { margin: 0; color: var(--ink-2); font-size: 0.86rem; max-width: 36ch; }
 
   .btn {
-    appearance: none; border: 1.5px solid var(--ink); background: var(--ink); color: var(--bg);
+    appearance: none; border: 1.5px solid var(--accent); background: var(--accent); color: var(--accent-ink);
     font-weight: 700; font-size: 0.86rem; padding: 13px 18px; border-radius: 0; cursor: pointer;
     display: inline-flex; align-items: center; justify-content: center; gap: 8px;
     text-transform: uppercase; letter-spacing: 0.03em; min-height: 46px; transition: opacity 120ms ease;
@@ -264,12 +285,22 @@
   .rank.top3 { color: var(--ink); font-size: 0.98rem; }
   .medal { font-size: inherit; line-height: 1; font-weight: inherit; letter-spacing: 0; }
   .media-col { font-weight: 700; color: var(--ink); font-size: 1.1rem; }
+  td.media-col { color: var(--accent); }
   th.media-col { color: var(--ink); font-weight: 700; font-size: 0.66rem; }
   .player-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .player-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .table-scroll { overflow-x: auto; margin-inline: -4px; padding-inline: 4px; }
+  .rules h3 { font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    margin: 26px 0 8px; padding-top: 14px; border-top: 1px solid var(--line-soft); }
+  .rules p { font-size: 0.86rem; color: var(--ink-2); margin: 0 0 10px; line-height: 1.5; }
+  .rules .sub { font-size: 0.9rem; line-height: 1.5; }
+  .geo-list, .col-list { list-style: none; margin: 0 0 10px; padding: 0; font-size: 0.86rem; color: var(--ink-2); }
+  .geo-list li, .col-list li { padding: 7px 0; border-bottom: 1px solid var(--line-soft); line-height: 1.45; }
+  .geo-list li:last-child, .col-list li:last-child { border-bottom: none; }
+  .geo-list b { display: inline-block; min-width: 8.5em; color: var(--accent); }
+  .col-list b { display: block; color: var(--ink); }
   .site-foot { margin-top: 36px; border-top: 2px solid var(--line); padding-top: 14px; }
-  .wa-link { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none;
+  .wa-link { display: inline-flex; align-items: center; gap: 10px; color: var(--accent); text-decoration: none;
     font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; min-height: 44px; }
   .wa-link:hover span:first-of-type { text-decoration: underline; text-underline-offset: 3px; }
   @media (max-width: 480px) {
@@ -342,14 +373,30 @@
   }
   .banner .tag { font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-right: 6px; }
   .banner.error { border-color: var(--ink); color: var(--ink); background: var(--surface-2); }
-  .banner.success { border-color: var(--ink); color: var(--ink); background: var(--ink); }
-  .banner.success, .banner.success .tag { color: var(--bg); }
+  .banner.success { border-color: var(--accent); background: var(--accent); }
+  .banner.success, .banner.success .tag { color: var(--accent-ink); }
 
   @media (max-width: 480px) {
     .row2 { grid-template-columns: 1fr; }
     .brand h1 { font-size: 1.3rem; }
   }
 </style>
+<script>
+  // Colour of the day: same for everyone, changes at midnight. Each entry is
+  // [light-mode, dark-mode]; all pass 5:1 contrast on white / on black.
+  (function () {
+    var PALETTE = [
+      ["#1f5fd1", "#6f9cff"], ["#b34f00", "#ff9a3c"], ["#1b7a43", "#4cc77f"], ["#ad2479", "#f06bb8"],
+      ["#866800", "#e0bd2f"], ["#3a43b5", "#8f97ff"], ["#c62f2a", "#ff6b62"], ["#00747a", "#3cc4c4"],
+      ["#6b3fc7", "#a98bff"], ["#5a7610", "#a3c74a"], ["#c13a5a", "#ff7f99"], ["#0a6aa0", "#4fb3e8"]
+    ];
+    var d = new Date();
+    var day = Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / 86400000);
+    var c = PALETTE[day % PALETTE.length];
+    document.documentElement.style.setProperty("--accent-l", c[0]);
+    document.documentElement.style.setProperty("--accent-d", c[1]);
+  })();
+</script>
 </head>
 <body>
 
@@ -357,52 +404,56 @@
   <header class="topbar">
     <div class="brand">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none">
-        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" fill="var(--ink)"/>
+        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" fill="var(--accent)"/>
         <circle cx="12" cy="9" r="2.6" fill="var(--bg)"/>
       </svg>
       <div>
         <h1>Plonk Club</h1>
-        <p>La daily di GeoGuessr, tra amici</p>
+        <p>La classifica tra amici della daily di GeoGuessr</p>
       </div>
     </div>
     <div class="today-chip">
-      <span>giocatori oggi</span>
-      <span class="n num" id="todayCount">—</span>
+      <span class="date" id="todayDate"></span>
+      <span class="count"><span class="n num" id="todayCount">—</span> hanno giocato oggi</span>
     </div>
   </header>
 
   <nav class="tabs" role="tablist">
-    <button class="tab active" data-tab="compare" type="button">Confronto</button>
+    <button class="tab active" data-tab="compare" type="button">Oggi</button>
     <button class="tab" data-tab="leaderboard" type="button">Classifica</button>
-    <button class="tab" data-tab="add" type="button">Aggiungi</button>
+    <button class="tab" data-tab="add" type="button">Carica</button>
+    <button class="tab" data-tab="rules" type="button">Regole</button>
   </nav>
 
   <main>
     <section id="panel-compare" class="panel active">
       <div class="card" id="pivotCard">
-        <h2 id="pivotTitle">Confronto di oggi</h2>
-        <p class="sub" id="pivotSub">Round e totale di chi ha già giocato oggi, in ordine di punteggio.</p>
+        <h2 id="pivotTitle">La daily di oggi</h2>
+        <p class="sub" id="pivotSub">I punteggi di oggi, round per round.</p>
         <div id="pivotBody"></div>
+        <p class="note">Nuovo qui? In <a href="#" data-goto="rules">Regole</a> trovi come funziona.</p>
       </div>
     </section>
 
     <section id="panel-leaderboard" class="panel">
       <div class="card" id="leaderboardCard">
-        <h2>Classifica generale</h2>
-        <p class="sub">Geopoints degli ultimi 30 giorni: ogni daily ne vale da 0 a 5 in base al totale. A parità decide la media. Chi non gioca da 15 giorni esce dalla classifica finché non torna.</p>
-        <div class="geo-scale" aria-label="Soglie dei Geopoints">
+        <h2>Classifica</h2>
+        <p class="sub">Ultimi 30 giorni. Ogni partita vale da 1 a 5 Geopoints, un giorno senza partita vale 0.</p>
+        <p class="geo-caption">Geopoints per partita</p>
+        <div class="geo-scale" aria-label="Geopoints per partita">
           <div class="geo-step"><span class="geo-pts num">0</span><span class="geo-range">non giocata</span></div>
-          <div class="geo-step"><span class="geo-pts num">1</span><span class="geo-range num">sotto 12.000</span></div>
-          <div class="geo-step"><span class="geo-pts num">2</span><span class="geo-range num">12.000–15.999</span></div>
-          <div class="geo-step"><span class="geo-pts num">3</span><span class="geo-range num">16.000–18.999</span></div>
-          <div class="geo-step"><span class="geo-pts num">4</span><span class="geo-range num">19.000–21.999</span></div>
+          <div class="geo-step"><span class="geo-pts num">1</span><span class="geo-range num">sotto 12.000 punti</span></div>
+          <div class="geo-step"><span class="geo-pts num">2</span><span class="geo-range num">da 12.000</span></div>
+          <div class="geo-step"><span class="geo-pts num">3</span><span class="geo-range num">da 16.000</span></div>
+          <div class="geo-step"><span class="geo-pts num">4</span><span class="geo-range num">da 19.000</span></div>
           <div class="geo-step"><span class="geo-pts num">5</span><span class="geo-range num">da 22.000</span></div>
         </div>
         <div id="leaderboardBody"></div>
+        <p class="note">A parità vince la media più alta. Chi non gioca per 15 giorni esce dalla classifica e rientra alla prima partita.</p>
       </div>
       <div class="card" id="trendCard" style="display:none">
         <h2>Andamento</h2>
-        <p class="sub">Punteggio totale per giorno, un tracciato per persona.</p>
+        <p class="sub">Il punteggio di ogni giorno, una linea per giocatore. Tocca un nome per evidenziarlo.</p>
         <div id="trendChart"></div>
         <div class="legend" id="trendLegend"></div>
       </div>
@@ -410,17 +461,26 @@
 
     <section id="panel-add" class="panel">
       <div class="card">
-        <h2>Aggiungi il tuo punteggio</h2>
-        <p class="sub">Scegli il nome e carica lo screenshot: si salva da solo appena viene letto il punteggio. Se hai sbagliato, carica quello giusto: la partita di oggi si sovrascrive.</p>
+        <h2>Carica la tua partita</h2>
+        <ol class="steps">
+          <li>Gioca la daily di oggi su GeoGuessr.</li>
+          <li>Fai uno screenshot della schermata finale e ritaglialo sulla barra con i 5 round e il totale, come qui sotto.</li>
+          <li>Scegli il tuo nome e carica lo screenshot: si salva da solo.</li>
+        </ol>
+        <figure class="example">
+          <img src="data:image/webp;base64,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" width="720" height="170" alt="Esempio: la barra dei punteggi con i 5 round e il totale">
+          <figcaption>Ritagliato così si legge meglio e più in fretta.</figcaption>
+        </figure>
+        <p class="sub">Screenshot sbagliato? Carica quello giusto: sostituisce quello di oggi.</p>
         <div id="addBanner"></div>
         <form class="add-form" id="addForm">
           <div class="field">
             <label for="fPlayer">Nome</label>
             <select id="fPlayer" required>
               <option value="" disabled selected>Scegli il tuo nome…</option>
-              <option value="__new__">+ Aggiungi nuovo giocatore</option>
+              <option value="__new__">+ Nuovo giocatore</option>
             </select>
-            <input type="text" id="fPlayerNew" placeholder="Nome e cognome, o nickname" autocomplete="off" hidden>
+            <input type="text" id="fPlayerNew" placeholder="Il tuo nome o nickname" autocomplete="off" hidden>
           </div>
           <input type="hidden" id="fDate">
 
@@ -430,7 +490,7 @@
               <input type="file" id="fFile" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
               <div id="dropzoneContent">
                 <svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="margin:0 auto"><path d="M4 16V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v12" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                <p>Trascina qui l'immagine o tocca per scegliere</p>
+                <p>Tocca per scegliere lo screenshot</p>
               </div>
             </div>
             <div class="ai-status" id="aiStatus"></div>
@@ -448,6 +508,51 @@
           <!-- Saving is automatic (tryAutoSave); the button stays only as hidden internal state. -->
           <button type="submit" class="btn block" id="saveBtn" disabled hidden>Carica</button>
         </form>
+      </div>
+    </section>
+
+    <section id="panel-rules" class="panel">
+      <div class="card rules">
+        <h2>Come funziona</h2>
+        <p class="sub">Plonk Club è la classifica di un gruppo di amici che ogni giorno gioca la daily di GeoGuessr: stessa partita per tutti, 5 round, un solo tentativo.</p>
+
+        <h3>Per partecipare</h3>
+        <ol class="steps">
+          <li>Gioca la daily su GeoGuessr.</li>
+          <li>Fai lo screenshot della schermata finale e ritaglialo sulla barra dei punteggi.</li>
+          <li>Caricalo nella scheda <a href="#" data-goto="add">Carica</a> con il tuo nome.</li>
+        </ol>
+
+        <h3>Geopoints</h3>
+        <p>Ogni partita vale da 1 a 5 Geopoints in base ai punti fatti:</p>
+        <ul class="geo-list">
+          <li><b class="num">0 Geopoints</b> non hai giocato</li>
+          <li><b class="num">1 Geopoint</b> sotto 12.000 punti</li>
+          <li><b class="num">2 Geopoints</b> da 12.000 punti</li>
+          <li><b class="num">3 Geopoints</b> da 16.000 punti</li>
+          <li><b class="num">4 Geopoints</b> da 19.000 punti</li>
+          <li><b class="num">5 Geopoints</b> da 22.000 punti</li>
+        </ul>
+        <p>La classifica somma i Geopoints degli ultimi 30 giorni: conta giocare bene, ma anche giocare spesso.</p>
+
+        <h3>Sempre gli ultimi 30 giorni</h3>
+        <p>La classifica non si azzera mai. Conta sempre gli ultimi 30 giorni, oggi compreso: ogni giorno entra la daily nuova ed esce quella di 30 giorni prima. Vale per tutto: Geopoints, media, vittorie, record e grafico.</p>
+
+        <h3>Le altre colonne</h3>
+        <ul class="col-list">
+          <li><b>Media</b> il punteggio medio delle tue partite. Decide a parità di Geopoints.</li>
+          <li><b>🏆 Vittorie</b> quante daily hai vinto negli ultimi 30 giorni. Vinci una daily quando fai più punti di tutti quel giorno.</li>
+          <li><b>Record</b> il tuo miglior punteggio degli ultimi 30 giorni.</li>
+        </ul>
+
+        <h3>Se ti fermi</h3>
+        <p>Dopo 15 giorni senza giocare esci dalla classifica e dall'elenco dei nomi. Rientri appena carichi una nuova partita.</p>
+
+        <h3>Per migliorare</h3>
+        <p><a href="https://www.plonkit.net/" target="_blank" rel="noopener">Plonkit</a> è la guida più completa per riconoscere i paesi: cartelli, pali, targhe, strade e vegetazione, paese per paese.</p>
+
+        <h3>Il gruppo</h3>
+        <p>I risultati si commentano su WhatsApp. <a href="https://chat.whatsapp.com/CHXkabfRKswA5254N7vD0E?mode=gi_t" target="_blank" rel="noopener">Entra nel gruppo</a></p>
       </div>
     </section>
   </main>
@@ -532,6 +637,14 @@
     });
   });
 
+  document.addEventListener("click", function (ev) {
+    var t = ev.target.closest && ev.target.closest("[data-goto]");
+    if (!t) return;
+    ev.preventDefault();
+    var tab = document.querySelector('.tab[data-tab="' + t.getAttribute("data-goto") + '"]');
+    if (tab) { tab.click(); window.scrollTo(0, 0); }
+  });
+
   // ---------- player line-pattern assignment (stable, alphabetical, fixed order) ----------
   function colorForPlayer(name) {
     var first = {};
@@ -608,7 +721,7 @@
     var html = '<div class="table-scroll"><table class="lb"><thead><tr>' +
       "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Punti Geopoints negli ultimi 30 giorni'>Geopoints</th>" +
       "<th class='num-cell' title='Punteggio medio delle partite giocate'>Media</th>" +
-      "<th class='num-cell' title='Giorni in cui ha avuto il punteggio più alto'>🏆</th><th class='num-cell' title='Miglior punteggio degli ultimi 30 giorni'>Record</th>" +
+      "<th class='num-cell' title='Daily vinte negli ultimi 30 giorni'>🏆</th><th class='num-cell' title='Miglior punteggio degli ultimi 30 giorni'>Record</th>" +
       "</tr></thead><tbody>";
     rows.forEach(function (r, i) {
       var rankCell = rankCellHtml(i);
@@ -629,9 +742,9 @@
   function emptyStateHtml() {
     return '<div class="empty">' +
       '<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" stroke="var(--ink-2)" stroke-width="1.4"/><circle cx="12" cy="9" r="2.6" stroke="var(--ink-2)" stroke-width="1.4"/></svg>' +
-      "<h2>Nessun punteggio ancora</h2>" +
-      "<p>Appena qualcuno aggiunge la sua daily, la classifica e il confronto si popolano qui.</p>" +
-      '<button class="btn" type="button" onclick="document.querySelector(\'[data-tab=add]\').click()">Aggiungi il primo punteggio</button>' +
+      "<h2>Nessuna partita ancora</h2>" +
+      "<p>Carica la prima e apri la classifica.</p>" +
+      '<button class="btn" type="button" data-goto="add">Carica la tua partita</button>' +
       "</div>";
   }
 
@@ -646,8 +759,8 @@
       pivotBody.innerHTML = '<div class="empty">' +
         '<svg width="40" height="40" viewBox="0 0 24 24" fill="none"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7Z" stroke="var(--ink-2)" stroke-width="1.4"/><circle cx="12" cy="9" r="2.6" stroke="var(--ink-2)" stroke-width="1.4"/></svg>' +
         "<h2>Nessuno ha ancora giocato oggi</h2>" +
-        "<p>Appena qualcuno carica la daily di oggi, la classifica di giornata compare qui, aggiornata in tempo reale.</p>" +
-        '<button class="btn" type="button" onclick="document.querySelector(\'[data-tab=add]\').click()">Aggiungi il tuo punteggio</button>' +
+        "<p>Gioca la daily e carica il tuo screenshot.</p>" +
+        '<button class="btn" type="button" data-goto="add">Carica la tua partita</button>' +
         "</div>";
       return;
     }
@@ -779,6 +892,8 @@
     var t = todayStr();
     var n = state.entries.filter(function (e) { return e.date === t; }).length;
     $("todayCount").textContent = n;
+    var label = new Date().toLocaleDateString("it-IT", { weekday: "long", day: "numeric", month: "long" });
+    $("todayDate").textContent = label;
   }
 
   function renderAll() {
@@ -891,7 +1006,7 @@
     // Technical-time guard: the AI read should never leave the UI stuck on the spinner.
     var timeoutId = setTimeout(function () {
       if (myToken !== analyzeToken) return;
-      aiStatus.innerHTML = "La lettura sta impiegando troppo tempo. " +
+      aiStatus.innerHTML = "La lettura ci sta mettendo troppo. " +
         '<button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
       var retryBtn = $("retryAnalyze");
       if (retryBtn) retryBtn.addEventListener("click", function () { analyzeFileGemini(); });
@@ -948,11 +1063,11 @@
       if (gotTotal) {
         autoSaveArmed = true;
         aiStatus.textContent = "Letto: " + fmtInt(Number($("fTotal").value)) + " punti" +
-          (roundCount ? " su " + roundCount + " round." : ".");
+          (roundCount ? " in " + roundCount + " round." : ".");
         $("saveBtn").disabled = false;
         tryAutoSave();
       } else {
-        aiStatus.innerHTML = "Non sono riuscito a leggere il punteggio — prova con un altro screenshot, più leggibile, oppure " +
+        aiStatus.innerHTML = MSG_UNREADABLE + " " +
           '<button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
         var retryBtn2 = $("retryAnalyze");
         if (retryBtn2) retryBtn2.addEventListener("click", function () { analyzeFileGemini(); });
@@ -961,9 +1076,10 @@
     }).catch(function (e) {
       clearTimeout(timeoutId);
       if (myToken !== analyzeToken || (e && e.stale)) return;
-      var msg = "Non sono riuscito a leggere lo screenshot — riprova.";
-      if (e && e.http === 429) msg = "Troppe richieste a Gemini per ora — riprova tra poco.";
-      else if (e && e.http === 400) msg = "Immagine non valida o richiesta rifiutata — prova con un altro screenshot.";
+      var raw = String(e && e.body && e.body.error && e.body.error.message || e && e.message || "");
+      var msg = MSG_UNREADABLE;
+      if (/429|quota|exhaust|too many/i.test(raw)) msg = "Troppe richieste in questo momento. Riprova tra qualche minuto.";
+      else if (/app ?check|attestation|\b401\b|\b403\b|permission|unauthenticated/i.test(raw)) msg = "Il tuo browser non ha superato il controllo di sicurezza. Apri il sito in Safari o Chrome, senza VPN o blocco pubblicità.";
       aiStatus.innerHTML = msg + ' <button type="button" class="btn secondary" id="retryAnalyze" style="margin-top:8px">Riprova</button>';
       var retryBtn3 = $("retryAnalyze");
       if (retryBtn3) retryBtn3.addEventListener("click", function () { analyzeFileGemini(); });
@@ -971,16 +1087,18 @@
     });
   }
 
+  var MSG_UNREADABLE = "Non riesco a leggere i punteggi. Ritaglia lo screenshot sulla barra con i 5 round e il totale, come nell'esempio.";
+
   // ---------- save ----------
   var addBanner = $("addBanner");
   function showBanner(msg, type) {
-    var tag = type === "error" ? "Errore — " : type === "success" ? "Fatto — " : "";
+    var tag = "";
     addBanner.innerHTML = '<div class="banner' + (type ? " " + type : "") + '">' +
       (tag ? '<span class="tag">' + tag + '</span>' : "") + escapeHtml(msg) + "</div>";
   }
 
   function saveEntry() {
-    if (!state.db) { showBanner("Il database condiviso non è disponibile in questa vista.", "error"); return; }
+    if (!state.db) { showBanner("Dati non disponibili. Ricarica la pagina.", "error"); return; }
     var player = $("fPlayer").value.trim();
     var date = todayStr();
     var total = Number($("fTotal").value);
@@ -1000,18 +1118,18 @@
       rounds: cleanRounds,
       updatedAt: new Date().toISOString()
     }).then(function () {
-      showBanner("Punteggio salvato. Guarda la classifica aggiornata.", "success");
+      showBanner("Salvato: " + fmtInt(total) + " punti" + (cleanRounds.length ? " in " + cleanRounds.length + " round." : "."), "success");
       try { localStorage.setItem("plonkclub_name", player); } catch (err) {}
       rounds = []; renderRounds();
       pendingFile = null;
-      $("dropzoneContent").innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="margin:0 auto"><path d="M4 16V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v12" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><p>Trascina qui l\'immagine o tocca per scegliere</p>';
+      $("dropzoneContent").innerHTML = '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" style="margin:0 auto"><path d="M4 16V18a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2M7 9l5-5 5 5M12 4v12" stroke="var(--ink-2)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg><p>Tocca per scegliere lo screenshot</p>';
       aiStatus.textContent = "";
       $("fTotal").value = "";
       $("fMode").value = "";
       saveBtn.disabled = true;
       saveBtn.textContent = "Carica";
     }).catch(function () {
-      showBanner("Non sono riuscito a salvare: ricarica lo screenshot tra poco.", "error");
+      showBanner("Salvataggio non riuscito. Carica di nuovo lo screenshot.", "error");
       aiStatus.textContent = "";
       autoSaveArmed = true; // let a retry (manual click or next auto-trigger) try again
       saveBtn.disabled = false;
@@ -1028,7 +1146,7 @@
     if (!player || player === "__new__") {
       var current = aiStatus.textContent;
       if (current && current.indexOf("Scegli il tuo nome") === -1) {
-        aiStatus.textContent = current + " Scegli il tuo nome qui sopra per salvarlo.";
+        aiStatus.textContent = current + " Scegli il tuo nome per salvare.";
       }
       return;
     }
@@ -1065,7 +1183,7 @@
     names.forEach(function (n) {
       html += '<option value="' + escapeHtml(n) + '"' + (n === current ? " selected" : "") + '>' + escapeHtml(n) + "</option>";
     });
-    html += '<option value="__new__">+ Aggiungi nuovo giocatore</option>';
+    html += '<option value="__new__">+ Nuovo giocatore</option>';
     playerSelect.innerHTML = html;
     playerSelect.hidden = false;
     playerNewInput.hidden = true;
@@ -1134,7 +1252,7 @@
       if (playerNewInput.hidden) renderPlayerOptions();
       tryPreselectPlayer(rememberedName);
     }, function () {
-      showBanner("Non riesco a leggere l'elenco giocatori in questo momento.", "error");
+      showBanner("Dati non disponibili. Ricarica la pagina.", "error");
     });
 
     // Only the last 30 days are loaded: keeps Firestore reads (free-tier quota) bounded
@@ -1152,7 +1270,7 @@
       renderAll();
       if (playerNewInput.hidden) renderPlayerOptions();
     }, function () {
-      showBanner("Non riesco a leggere i punteggi condivisi in questo momento.", "error");
+      showBanner("Dati non disponibili. Ricarica la pagina.", "error");
     });
   }
 
