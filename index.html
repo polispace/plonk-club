@@ -785,7 +785,7 @@
 
     var html = '<div class="table-scroll"><table class="pivot"><thead><tr><th></th><th>Giocatore</th>';
     for (var r = 1; r <= maxRounds; r++) html += "<th class='num-cell'>R" + r + "</th>";
-    html += "<th class='num-cell'>Totale</th></tr></thead><tbody>";
+    html += "<th class='num-cell media-col'>Totale</th></tr></thead><tbody>";
     todays.forEach(function (e, i) {
       var rankCell = rankCellHtml(i);
       html += "<tr><td class='rank num" + (i < 3 ? " top3" : "") + "'>" + rankCell + "</td><td><div class='player-cell'>" +
@@ -794,7 +794,7 @@
         var rd = e.rounds && e.rounds[i2];
         html += "<td class='num-cell num'>" + (rd && rd.score != null ? fmtInt(rd.score) : "<span style='color:var(--muted)'>—</span>") + "</td>";
       }
-      html += "<td class='num-cell num'>" + fmtInt(e.total) + "</td></tr>";
+      html += "<td class='num-cell num media-col'>" + fmtInt(e.total) + "</td></tr>";
     });
     html += "</tbody></table></div>";
     pivotBody.innerHTML = html;
