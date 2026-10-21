@@ -540,13 +540,13 @@
         <p>In una giornata puoi fare da 0 a 8 Geopoints. La classifica li somma sugli ultimi 15 giorni: conta giocare bene, ma anche giocare spesso.</p>
 
         <h3>Sempre gli ultimi 15 giorni</h3>
-        <p>La classifica non si azzera mai. Conta sempre gli ultimi 15 giorni, oggi compreso: ogni giorno entra la daily nuova ed esce quella di 15 giorni prima. Vale per tutto: Geopoints, media, vittorie, record e grafico.</p>
+        <p>La classifica non si azzera mai. Conta sempre gli ultimi 15 giorni, oggi compreso: ogni giorno entra la daily nuova ed esce quella di 15 giorni prima. Vale per Geopoints, media, vittorie e grafico. Il record invece è di sempre.</p>
 
         <h3>Le altre colonne</h3>
         <ul class="col-list">
           <li><b>Media</b> il punteggio medio delle tue partite. Decide a parità di Geopoints.</li>
           <li><b>🏆 Vittorie</b> quante daily hai vinto negli ultimi 15 giorni. Vinci una daily quando fai più punti di tutti quel giorno.</li>
-          <li><b>Record</b> il tuo miglior punteggio degli ultimi 15 giorni.</li>
+          <li><b>Record</b> il tuo miglior punteggio di sempre.</li>
         </ul>
 
         <h3>Se ti fermi</h3>
@@ -713,7 +713,8 @@
         geo: geo,
         avg: sum / list.length,
         wins: winsByPlayer[name] || 0,
-        best: Math.max.apply(null, totals)
+        // Record is the all-time personal best (players doc), never lower than what is on screen
+        best: Math.max(state.playerBest[slugify(name)] || 0, Math.max.apply(null, totals))
       };
     });
     rows.sort(function (a, b) { return b.geo - a.geo || b.avg - a.avg || b.wins - a.wins; });
@@ -735,7 +736,7 @@
     var html = '<div class="table-scroll"><table class="lb"><thead><tr>' +
       "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Geopoints negli ultimi 15 giorni'>Geopoints</th>" +
       "<th class='num-cell' title='Punteggio medio delle partite giocate'>Media</th>" +
-      "<th class='num-cell' title='Daily vinte negli ultimi 15 giorni'>🏆</th><th class='num-cell' title='Miglior punteggio degli ultimi 15 giorni'>Record</th>" +
+      "<th class='num-cell' title='Daily vinte negli ultimi 15 giorni'>🏆</th><th class='num-cell' title='Miglior punteggio di sempre'>Record</th>" +
       "</tr></thead><tbody>";
     rows.forEach(function (r, i) {
       var rankCell = rankCellHtml(i);
@@ -1133,6 +1134,11 @@
       updatedAt: new Date().toISOString()
     }).then(function () {
       showBanner("Salvato: " + fmtInt(total) + " punti" + (cleanRounds.length ? " in " + cleanRounds.length + " round." : "."), "success");
+      var slug = slugify(player);
+      if (Math.round(total) > (state.playerBest[slug] || 0)) {
+        state.playerBest[slug] = Math.round(total);
+        state.db.collection("players").doc(slug).set({ name: player, best: Math.round(total), bestDate: date }, { merge: true }).catch(function () {});
+      }
       try { localStorage.setItem("plonkclub_name", player); } catch (err) {}
       rounds = []; renderRounds();
       pendingFile = null;
@@ -1176,6 +1182,7 @@
   var playerSelect = $("fPlayer"), playerNewInput = $("fPlayerNew");
   state.players = [];
   state.playerAddedAt = {};   // slug -> ISO time the name was (re)added from this form
+  state.playerBest = {};      // slug -> all-time best total, kept on the player's doc (best / bestDate)
   state.activeSlugs = {};     // slug -> true if that player has a game in the last ACTIVE_DAYS days
   var sessionNames = {};      // slug -> true for names added/picked on this device this session
   var rememberedName = "";
@@ -1257,13 +1264,16 @@
     state.db.collection("players").onSnapshot(function (snap) {
       state.players = [];
       state.playerAddedAt = {};
+      state.playerBest = {};
       snap.docs.forEach(function (d) {
         var v = d.data();
         if (!v || !v.name) return;
         state.players.push(v.name);
         if (v.addedAt) state.playerAddedAt[slugify(v.name)] = v.addedAt;
+        if (typeof v.best === "number") state.playerBest[slugify(v.name)] = v.best;
       });
       if (playerNewInput.hidden) renderPlayerOptions();
+      renderLeaderboard();
       tryPreselectPlayer(rememberedName);
     }, function () {
       showBanner("Dati non disponibili. Ricarica la pagina.", "error");
