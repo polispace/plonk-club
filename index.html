@@ -234,7 +234,7 @@
   }
   .card .sub { font-size: 0.8rem; color: var(--ink-2); margin: 0 0 16px; }
   .card .note { font-size: 0.76rem; color: var(--muted); margin: 16px 0 0; }
-  .card .note a, .rules a { color: var(--accent); font-weight: 700; }
+  .card .note a, .card .sub a, .rules a { color: var(--accent); font-weight: 700; }
   .steps { margin: 0 0 12px; padding-left: 1.3em; font-size: 0.86rem; color: var(--ink); }
   .steps li { margin: 4px 0; padding-left: 2px; }
   .steps li::marker { color: var(--accent); font-weight: 800; }
@@ -443,22 +443,7 @@
     <section id="panel-leaderboard" class="panel">
       <div class="card" id="leaderboardCard">
         <h2>Classifica</h2>
-        <p class="sub">Ultimi 15 giorni. Ogni partita vale da 1 a 5 Geopoints, più un bonus se sei sul podio del giorno. Un giorno senza partita vale 0.</p>
-        <p class="geo-caption">Geopoints per partita</p>
-        <div class="geo-scale" aria-label="Geopoints per partita">
-          <div class="geo-step"><span class="geo-pts num">0</span><span class="geo-range">non giocata</span></div>
-          <div class="geo-step"><span class="geo-pts num">1</span><span class="geo-range num">sotto 14.000 punti</span></div>
-          <div class="geo-step"><span class="geo-pts num">2</span><span class="geo-range num">da 14.000</span></div>
-          <div class="geo-step"><span class="geo-pts num">3</span><span class="geo-range num">da 16.500</span></div>
-          <div class="geo-step"><span class="geo-pts num">4</span><span class="geo-range num">da 18.500</span></div>
-          <div class="geo-step"><span class="geo-pts num">5</span><span class="geo-range num">da 20.500</span></div>
-        </div>
-        <p class="geo-caption">Bonus podio del giorno</p>
-        <div class="geo-scale podium" aria-label="Bonus podio del giorno">
-          <div class="geo-step"><span class="geo-pts num">+3</span><span class="geo-range">1° del giorno</span></div>
-          <div class="geo-step"><span class="geo-pts num">+2</span><span class="geo-range">2° del giorno</span></div>
-          <div class="geo-step"><span class="geo-pts num">+1</span><span class="geo-range">3° del giorno</span></div>
-        </div>
+        <p class="sub">Ultimi 15 giorni. Ogni partita vale da 1 a 5 Geopoints, più un bonus se sei sul podio del giorno. Un giorno senza partita vale 0. Il dettaglio è in <a href="#" data-goto="rules">Regole</a>.</p>
         <div id="leaderboardBody"></div>
         <p class="note">A parità vince la media più alta. Chi non gioca per 15 giorni esce dalla classifica e rientra alla prima partita.</p>
       </div>
