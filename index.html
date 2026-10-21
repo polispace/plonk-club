@@ -291,6 +291,7 @@
   .medal { font-size: inherit; line-height: 1; font-weight: inherit; letter-spacing: 0; }
   .media-col { font-weight: 700; color: var(--ink); font-size: 1.1rem; }
   td.media-col { color: var(--accent); }
+  .geo-sub { display: block; margin-top: 3px; font-size: 0.6rem; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1; }
   th.media-col { color: var(--ink); font-weight: 700; font-size: 0.66rem; }
   .player-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .player-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -434,7 +435,7 @@
     <section id="panel-compare" class="panel active">
       <div class="card" id="pivotCard">
         <h2 id="pivotTitle">La daily di oggi</h2>
-        <p class="sub" id="pivotSub">I punteggi di oggi, round per round.</p>
+        <p class="sub" id="pivotSub">I punteggi di oggi, round per round. Fino a mezzanotte il podio, e quindi i Geopoints, può ancora cambiare.</p>
         <div id="pivotBody"></div>
         <p class="note">Nuovo qui? In <a href="#" data-goto="rules">Regole</a> trovi come funziona.</p>
       </div>
@@ -794,7 +795,11 @@
         var rd = e.rounds && e.rounds[i2];
         html += "<td class='num-cell num'>" + (rd && rd.score != null ? fmtInt(rd.score) : "<span style='color:var(--muted)'>—</span>") + "</td>";
       }
-      html += "<td class='num-cell num media-col'>" + fmtInt(e.total) + "</td></tr>";
+      // today's Geopoints: threshold points + provisional podium bonus (can change until midnight)
+      var better = todays.filter(function (o) { return o.total > e.total; }).length;
+      var geo = geoPoints(e.total) + (better < PODIUM_BONUS.length ? PODIUM_BONUS[better] : 0);
+      html += "<td class='num-cell num media-col'>" + fmtInt(e.total) +
+        "<span class='geo-sub'>" + geo + (geo === 1 ? " Geopoint" : " Geopoints") + "</span></td></tr>";
     });
     html += "</tbody></table></div>";
     pivotBody.innerHTML = html;
