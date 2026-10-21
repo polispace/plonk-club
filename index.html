@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Plonk Club</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
 <script type="module">
@@ -101,7 +104,7 @@
      of cards-with-shadows, one scrolling panel at a time.
      Color: black, white, two greys. No hue anywhere in the UI chrome —
      rank and emphasis come from type weight/size, not color.
-     Type: Helvetica/Arial system stack throughout, tabular figures for
+     Type: Inter (Google Fonts, Helvetica fallback) throughout, tabular figures for
      anything numeric. Big, confident numerals carry the hierarchy.
   ----------------------------------------------------------------- */
   :root {
@@ -167,11 +170,11 @@
   * { box-sizing: border-box; }
   body { background: var(--bg); color: var(--ink); }
   body, button, input, select {
-    font-family: "Helvetica Neue", Helvetica, Arial, -apple-system, system-ui, sans-serif;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, -apple-system, system-ui, sans-serif;
   }
   h1, h2, h3, .display { font-family: inherit; }
   .num, .mono, time, td.num-cell {
-    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif;
     font-variant-numeric: tabular-nums;
   }
 
@@ -179,25 +182,25 @@
 
   .topbar {
     display: flex; align-items: flex-end; justify-content: space-between;
-    gap: 12px; margin-bottom: 20px; padding-bottom: 16px; border-bottom: 3px solid var(--line);
+    gap: 12px; margin-bottom: 6px; padding-bottom: 6px;
   }
   .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
   .brand svg { flex: none; }
   .brand h1 {
-    font-size: 1.6rem; font-weight: 700; margin: 0; letter-spacing: -0.01em;
-    text-transform: uppercase;
+    font-size: 1.7rem; font-weight: 800; margin: 0; letter-spacing: -0.025em; line-height: 1.05;
   }
-  .brand p { margin: 2px 0 0; font-size: 0.72rem; color: var(--ink-2); text-transform: uppercase; letter-spacing: 0.03em; }
+  .brand p { margin: 3px 0 0; font-size: 0.82rem; color: var(--ink-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .today-chip {
     flex: none; display: flex; flex-direction: column; align-items: flex-end;
     font-size: 0.68rem; color: var(--muted); text-align: right; gap: 2px;
     text-transform: uppercase; letter-spacing: 0.04em;
   }
-  .today-chip .n { font-size: 1.5rem; color: var(--ink); font-weight: 700; letter-spacing: -0.02em; }
+  .today-chip .n { font-size: 1.7rem; color: var(--ink); font-weight: 800; letter-spacing: -0.02em; line-height: 1; order: -1; }
 
   .tabs {
-    display: flex; gap: 0; border-bottom: 1px solid var(--line); margin-bottom: 24px;
+    display: flex; gap: 0; border-bottom: 2px solid var(--line); margin-bottom: 24px;
   }
+  .panel > .card:first-child { border-top: none; padding-top: 0; }
   .tab {
     flex: 1; appearance: none; border: none; border-bottom: 3px solid transparent; background: transparent;
     color: var(--muted); font-size: 0.78rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
@@ -218,6 +221,15 @@
     font-size: 0.78rem; margin: 0 0 4px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
   }
   .card .sub { font-size: 0.8rem; color: var(--ink-2); margin: 0 0 16px; }
+  .geo-scale { display: grid; grid-template-columns: repeat(6, 1fr); margin: -4px 0 20px;
+    border-top: 1px solid var(--line-soft); border-bottom: 1px solid var(--line-soft); }
+  .geo-step { display: flex; flex-direction: column; gap: 3px; padding: 9px 8px 9px 0; }
+  .geo-pts { font-size: 1.2rem; font-weight: 700; line-height: 1; }
+  .geo-range { font-size: 0.7rem; color: var(--muted); white-space: nowrap; }
+  @media (max-width: 560px) {
+    .geo-scale { grid-template-columns: repeat(3, 1fr); }
+    .geo-step:nth-child(-n+3) { border-bottom: 1px solid var(--line-soft); }
+  }
 
   .empty {
     text-align: center; padding-block: 40px 32px; display: flex; flex-direction: column;
@@ -234,6 +246,7 @@
     text-transform: uppercase; letter-spacing: 0.03em; min-height: 46px; transition: opacity 120ms ease;
   }
   .btn:hover { opacity: 0.8; }
+  .btn[hidden] { display: none; }
   .btn:disabled { opacity: 0.35; cursor: not-allowed; }
   .btn.secondary { background: transparent; color: var(--ink); border-color: var(--line-soft); }
   .btn.secondary:hover { background: var(--surface-2); opacity: 1; }
@@ -251,10 +264,21 @@
   .rank.top3 { color: var(--ink); font-size: 0.98rem; }
   .medal { font-size: inherit; line-height: 1; font-weight: inherit; letter-spacing: 0; }
   .media-col { font-weight: 700; color: var(--ink); font-size: 1.1rem; }
-  th.media-col { color: var(--ink); font-weight: 700; }
+  th.media-col { color: var(--ink); font-weight: 700; font-size: 0.66rem; }
   .player-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
   .player-name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .table-scroll { overflow-x: auto; margin-inline: -4px; padding-inline: 4px; }
+  .site-foot { margin-top: 36px; border-top: 2px solid var(--line); padding-top: 14px; }
+  .wa-link { display: inline-flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none;
+    font-weight: 700; font-size: 0.86rem; text-transform: uppercase; letter-spacing: 0.03em; min-height: 44px; }
+  .wa-link:hover span:first-of-type { text-decoration: underline; text-underline-offset: 3px; }
+  @media (max-width: 480px) {
+    table.lb { font-size: 0.84rem; }
+    table.lb th, table.lb td { padding-right: 7px; }
+    table.lb th:last-child, table.lb td:last-child { padding-right: 0; }
+    table.lb td.media-col { font-size: 1rem; }
+    table.lb .rank { width: 2em; }
+  }
 
   .spark { display: block; }
 
@@ -338,11 +362,11 @@
       </svg>
       <div>
         <h1>Plonk Club</h1>
-        <p>Classifica di gruppo per la daily di GeoGuessr</p>
+        <p>La daily di GeoGuessr, tra amici</p>
       </div>
     </div>
     <div class="today-chip">
-      <span>oggi</span>
+      <span>giocatori oggi</span>
       <span class="n num" id="todayCount">—</span>
     </div>
   </header>
@@ -365,7 +389,15 @@
     <section id="panel-leaderboard" class="panel">
       <div class="card" id="leaderboardCard">
         <h2>Classifica generale</h2>
-        <p class="sub">Media punti per partita, sulle daily degli ultimi 30 giorni.</p>
+        <p class="sub">Geopoints degli ultimi 30 giorni: ogni daily ne vale da 0 a 5 in base al totale. A parità decide la media. Chi non gioca da 15 giorni esce dalla classifica finché non torna.</p>
+        <div class="geo-scale" aria-label="Soglie dei Geopoints">
+          <div class="geo-step"><span class="geo-pts num">0</span><span class="geo-range">non giocata</span></div>
+          <div class="geo-step"><span class="geo-pts num">1</span><span class="geo-range num">sotto 12.000</span></div>
+          <div class="geo-step"><span class="geo-pts num">2</span><span class="geo-range num">12.000–15.999</span></div>
+          <div class="geo-step"><span class="geo-pts num">3</span><span class="geo-range num">16.000–18.999</span></div>
+          <div class="geo-step"><span class="geo-pts num">4</span><span class="geo-range num">19.000–21.999</span></div>
+          <div class="geo-step"><span class="geo-pts num">5</span><span class="geo-range num">da 22.000</span></div>
+        </div>
         <div id="leaderboardBody"></div>
       </div>
       <div class="card" id="trendCard" style="display:none">
@@ -379,7 +411,7 @@
     <section id="panel-add" class="panel">
       <div class="card">
         <h2>Aggiungi il tuo punteggio</h2>
-        <p class="sub">Scegli il nome, carica lo screenshot: si salva da solo appena l'AI legge il punteggio.</p>
+        <p class="sub">Scegli il nome e carica lo screenshot: si salva da solo appena viene letto il punteggio. Se hai sbagliato, carica quello giusto: la partita di oggi si sovrascrive.</p>
         <div id="addBanner"></div>
         <form class="add-form" id="addForm">
           <div class="field">
@@ -413,11 +445,20 @@
               <div class="rounds-list" id="roundsList" hidden></div>
           </div>
 
-          <button type="submit" class="btn block" id="saveBtn" disabled>Carica</button>
+          <!-- Saving is automatic (tryAutoSave); the button stays only as hidden internal state. -->
+          <button type="submit" class="btn block" id="saveBtn" disabled hidden>Carica</button>
         </form>
       </div>
     </section>
   </main>
+
+  <footer class="site-foot">
+    <a class="wa-link" href="https://chat.whatsapp.com/CHXkabfRKswA5254N7vD0E?mode=gi_t" target="_blank" rel="noopener">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 19l-4 1Z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      <span>Entra nel gruppo WhatsApp</span>
+      <span aria-hidden="true">→</span>
+    </a>
+  </footer>
 </div>
 
 <div class="tooltip" id="tooltip"></div>
@@ -467,6 +508,13 @@
     var tz = d.getTimezoneOffset() * 60000;
     return new Date(d.getTime() - tz).toISOString().slice(0, 10);
   }
+  // A player who hasn't played for ACTIVE_DAYS days disappears everywhere
+  // (leaderboard, chart, name list) until they play again.
+  var ACTIVE_DAYS = 15;
+  function activeCutoffStr() {
+    var d = new Date(); d.setDate(d.getDate() - (ACTIVE_DAYS - 1));
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
+  }
   function fmtDateShort(iso) {
     var d = new Date(iso + "T00:00:00");
     if (isNaN(d)) return iso;
@@ -504,6 +552,10 @@
   }
 
   // ---------- derived stats ----------
+  // Geopoints thresholds: 1 below 12,000 - 2 from 12,000 - 3 from 16,000 - 4 from 19,000 - 5 from 22,000
+  function geoPoints(total) {
+    return total >= 22000 ? 5 : total >= 19000 ? 4 : total >= 16000 ? 3 : total >= 12000 ? 2 : 1;
+  }
   function computeStats() {
     var byPlayer = {};
     state.entries.forEach(function (e) {
@@ -521,19 +573,23 @@
       if (e.total === maxByDate[e.date]) winsByPlayer[e.player] = (winsByPlayer[e.player] || 0) + 1;
     });
 
+    // Geopoints: each game earns 1-5 points from its total; a day not played earns 0.
     var rows = Object.keys(byPlayer).map(function (name) {
-      var list = byPlayer[name].slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+      var list = byPlayer[name];
       var totals = list.map(function (e) { return e.total; });
       var sum = totals.reduce(function (a, b) { return a + b; }, 0);
+      var geo = 0;
+      totals.forEach(function (t) { geo += geoPoints(t); });
       return {
         name: name,
         games: list.length,
+        geo: geo,
         avg: sum / list.length,
         wins: winsByPlayer[name] || 0,
         best: Math.max.apply(null, totals)
       };
     });
-    rows.sort(function (a, b) { return b.avg - a.avg; });
+    rows.sort(function (a, b) { return b.geo - a.geo || b.avg - a.avg || b.wins - a.wins; });
     return rows;
   }
 
@@ -549,9 +605,10 @@
       return;
     }
     var rows = computeStats();
-    var html = '<div class="table-scroll"><table><thead><tr>' +
-      "<th></th><th>Giocatore</th><th>Partite</th><th class='num-cell media-col'>Media</th>" +
-      "<th class='num-cell' title='Giorni in cui ha avuto il punteggio più alto'>🏆</th><th class='num-cell'>Migliore</th>" +
+    var html = '<div class="table-scroll"><table class="lb"><thead><tr>' +
+      "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Punti Geopoints negli ultimi 30 giorni'>Geopoints</th>" +
+      "<th class='num-cell' title='Punteggio medio delle partite giocate'>Media</th>" +
+      "<th class='num-cell' title='Giorni in cui ha avuto il punteggio più alto'>🏆</th><th class='num-cell' title='Miglior punteggio degli ultimi 30 giorni'>Record</th>" +
       "</tr></thead><tbody>";
     rows.forEach(function (r, i) {
       var rankCell = rankCellHtml(i);
@@ -559,8 +616,8 @@
         '<td class="rank num' + (i < 3 ? " top3" : "") + '">' + rankCell + "</td>" +
         '<td><div class="player-cell">' +
         '<span class="player-name">' + escapeHtml(r.name) + "</span></div></td>" +
-        "<td class='num-cell num'>" + r.games + "</td>" +
-        "<td class='num-cell num media-col'>" + fmtInt(r.avg) + "</td>" +
+        "<td class='num-cell num media-col'>" + r.geo + "</td>" +
+        "<td class='num-cell num'>" + fmtInt(r.avg) + "</td>" +
         "<td class='num-cell num'>" + (r.wins || "–") + "</td>" +
         "<td class='num-cell num'>" + fmtInt(r.best) + "</td>" +
         "</tr>";
@@ -651,11 +708,11 @@
     var svg = '<svg class="trend-svg" width="100%" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Andamento punteggi">';
     gridY.forEach(function (gl) {
       svg += '<line x1="' + padL + '" x2="' + (w - padR) + '" y1="' + gl.y.toFixed(1) + '" y2="' + gl.y.toFixed(1) + '" stroke="var(--line-soft)" stroke-width="1"/>';
-      svg += '<text x="' + (padL - 8) + '" y="' + (gl.y + 3).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Helvetica, Arial, sans-serif">' + gl.label + "</text>";
+      svg += '<text x="' + (padL - 8) + '" y="' + (gl.y + 3).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + gl.label + "</text>";
     });
     datesAsc.forEach(function (d, i) {
       if (datesAsc.length > 8 && i % Math.ceil(datesAsc.length / 6) !== 0 && i !== datesAsc.length - 1) return;
-      svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Helvetica, Arial, sans-serif">' + fmtDateShort(d) + "</text>";
+      svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + fmtDateShort(d) + "</text>";
     });
 
     var pointData = [];
@@ -935,6 +992,7 @@
     });
     var saveBtn = $("saveBtn");
     saveBtn.disabled = true; saveBtn.textContent = "Caricamento…";
+    aiStatus.textContent = "Salvataggio…";
     var id = date + "__" + slugify(player);
     state.db.collection("entries").doc(id).set({
       date: date, player: player, total: Math.round(total),
@@ -953,7 +1011,8 @@
       saveBtn.disabled = true;
       saveBtn.textContent = "Carica";
     }).catch(function () {
-      showBanner("Non sono riuscito a salvare — riprova tra poco.", "error");
+      showBanner("Non sono riuscito a salvare: ricarica lo screenshot tra poco.", "error");
+      aiStatus.textContent = "";
       autoSaveArmed = true; // let a retry (manual click or next auto-trigger) try again
       saveBtn.disabled = false;
       saveBtn.textContent = "Carica";
@@ -984,12 +1043,24 @@
   // ---------- player roster: dropdown + add-new ----------
   var playerSelect = $("fPlayer"), playerNewInput = $("fPlayerNew");
   state.players = [];
+  state.playerAddedAt = {};   // slug -> ISO time the name was (re)added from this form
+  state.activeSlugs = {};     // slug -> true if that player has a game in the last ACTIVE_DAYS days
+  var sessionNames = {};      // slug -> true for names added/picked on this device this session
   var rememberedName = "";
 
+  function isVisiblePlayer(name) {
+    var sl = slugify(name);
+    if (state.activeSlugs[sl] || sessionNames[sl]) return true;
+    if (rememberedName && slugify(rememberedName) === sl) return true;
+    var at = state.playerAddedAt[sl];
+    return !!(at && String(at).slice(0, 10) >= activeCutoffStr());
+  }
+
   function renderPlayerOptions(selectName) {
-    var names = state.players.slice().sort(function (a, b) { return a.localeCompare(b, "it"); });
     var current = selectName !== undefined ? selectName : playerSelect.value;
     if (current === "__new__") current = "";
+    var names = state.players.filter(function (n) { return n === current || isVisiblePlayer(n); })
+      .sort(function (a, b) { return a.localeCompare(b, "it"); });
     var html = '<option value="" disabled' + (current ? "" : " selected") + '>Scegli il tuo nome…</option>';
     names.forEach(function (n) {
       html += '<option value="' + escapeHtml(n) + '"' + (n === current ? " selected" : "") + '>' + escapeHtml(n) + "</option>";
@@ -1003,7 +1074,7 @@
   function tryPreselectPlayer(name) {
     if (!name || playerSelect.value) return;
     var match = state.players.filter(function (p) { return p.toLowerCase() === String(name).toLowerCase(); })[0];
-    if (match) { renderPlayerOptions(match); tryAutoSave(); }
+    if (match) { sessionNames[slugify(match)] = true; renderPlayerOptions(match); tryAutoSave(); }
   }
 
   playerSelect.addEventListener("change", function () {
@@ -1020,10 +1091,13 @@
   function commitNewPlayer() {
     var name = playerNewInput.value.trim().slice(0, 60);
     if (!name) { renderPlayerOptions(""); return; }
-    if (state.players.indexOf(name) === -1) {
-      state.players.push(name);
-      if (state.db) state.db.collection("players").doc(slugify(name)).set({ name: name }).catch(function () {});
-    }
+    // reuse an existing name written differently (e.g. "alessio" -> "Alessio")
+    var existing = state.players.filter(function (p) { return slugify(p) === slugify(name); })[0];
+    if (existing) name = existing; else state.players.push(name);
+    sessionNames[slugify(name)] = true;
+    var addedAt = new Date().toISOString();
+    state.playerAddedAt[slugify(name)] = addedAt;
+    if (state.db) state.db.collection("players").doc(slugify(name)).set({ name: name, addedAt: addedAt }, { merge: true }).catch(function () {});
     renderPlayerOptions(name);
     tryAutoSave();
   }
@@ -1049,8 +1123,15 @@
     state.db = firebase.firestore();
 
     state.db.collection("players").onSnapshot(function (snap) {
-      state.players = snap.docs.map(function (d) { var v = d.data(); return v && v.name; }).filter(Boolean);
-      renderPlayerOptions();
+      state.players = [];
+      state.playerAddedAt = {};
+      snap.docs.forEach(function (d) {
+        var v = d.data();
+        if (!v || !v.name) return;
+        state.players.push(v.name);
+        if (v.addedAt) state.playerAddedAt[slugify(v.name)] = v.addedAt;
+      });
+      if (playerNewInput.hidden) renderPlayerOptions();
       tryPreselectPlayer(rememberedName);
     }, function () {
       showBanner("Non riesco a leggere l'elenco giocatori in questo momento.", "error");
@@ -1061,8 +1142,15 @@
     var cutoffD = new Date(); cutoffD.setDate(cutoffD.getDate() - 29);
     var cutoff = new Date(cutoffD.getTime() - cutoffD.getTimezoneOffset() * 60000).toISOString().slice(0, 10);
     state.db.collection("entries").where("date", ">=", cutoff).orderBy("date", "desc").limit(700).onSnapshot(function (snap) {
-      state.entries = snap.docs.map(function (d) { return d.data(); }).filter(function (e) { return e && e.date && e.player && typeof e.total === "number"; });
+      var all = snap.docs.map(function (d) { return d.data(); }).filter(function (e) { return e && e.date && e.player && typeof e.total === "number"; });
+      // keep only players with at least one game in the last ACTIVE_DAYS days
+      var cut = activeCutoffStr(), active = {};
+      all.forEach(function (e) { if (e.date >= cut) active[e.player] = true; });
+      state.activeSlugs = {};
+      Object.keys(active).forEach(function (p) { state.activeSlugs[slugify(p)] = true; });
+      state.entries = all.filter(function (e) { return active[e.player]; });
       renderAll();
+      if (playerNewInput.hidden) renderPlayerOptions();
     }, function () {
       showBanner("Non riesco a leggere i punteggi condivisi in questo momento.", "error");
     });
