@@ -546,6 +546,7 @@
         <h3>Le altre colonne</h3>
         <ul class="col-list">
           <li><b>Media</b> il punteggio medio delle tue partite. Decide a parità di Geopoints.</li>
+          <li><b>Partite</b> quante daily hai giocato negli ultimi 15 giorni, su 15. Vale per tutti allo stesso modo, anche per chi ha iniziato da poco.</li>
           <li><b>🏆 Vittorie</b> quante daily hai vinto negli ultimi 15 giorni. Vinci una daily quando fai più punti di tutti quel giorno.</li>
           <li><b>Record</b> il tuo miglior punteggio di sempre.</li>
         </ul>
@@ -737,6 +738,7 @@
     var html = '<div class="table-scroll"><table class="lb"><thead><tr>' +
       "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Geopoints negli ultimi 15 giorni'>Geopoints</th>" +
       "<th class='num-cell' title='Punteggio medio delle partite giocate'>Media</th>" +
+      "<th class='num-cell' title='Daily giocate negli ultimi 15 giorni, su 15'>Partite</th>" +
       "<th class='num-cell' title='Daily vinte negli ultimi 15 giorni'>🏆</th><th class='num-cell' title='Miglior punteggio di sempre'>Record</th>" +
       "</tr></thead><tbody>";
     rows.forEach(function (r, i) {
@@ -747,6 +749,7 @@
         '<span class="player-name">' + escapeHtml(r.name) + "</span></div></td>" +
         "<td class='num-cell num media-col'>" + r.geo + "</td>" +
         "<td class='num-cell num'>" + fmtInt(r.avg) + "</td>" +
+        "<td class='num-cell num'>" + r.games + "/15</td>" +
         "<td class='num-cell num'>" + (r.wins || "–") + "</td>" +
         "<td class='num-cell num'>" + fmtInt(r.best) + "</td>" +
         "</tr>";
