@@ -848,14 +848,14 @@
 
     var svg = '<svg class="trend-svg" width="100%" viewBox="0 0 ' + w + " " + h + '" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Andamento punteggi">';
     gridY.forEach(function (gl) {
-      svg += '<line x1="' + padL + '" x2="' + (w - padR) + '" y1="' + gl.y.toFixed(1) + '" y2="' + gl.y.toFixed(1) + '" stroke="var(--line-soft)" stroke-width="1"/>';
+      svg += '<line x1="' + padL + '" x2="' + (w - padR) + '" y1="' + gl.y.toFixed(1) + '" y2="' + gl.y.toFixed(1) + '" stroke="var(--line-soft)" stroke-width="0.6" stroke-opacity="0.7"/>';
       svg += '<text x="' + (padL - 8) + '" y="' + (gl.y + 3).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + gl.label + "</text>";
     });
     // one label per day: the day number, plus the month on the first day and on the 1st of a month
     datesAsc.forEach(function (d, i) {
       var day = Number(d.slice(8, 10));
       var label = (i === 0 || day === 1) ? fmtDateShort(d) : String(day);
-      svg += '<line x1="' + xAt(i).toFixed(1) + '" x2="' + xAt(i).toFixed(1) + '" y1="' + padT + '" y2="' + (h - padB) + '" stroke="var(--line-soft)" stroke-width="1"/>';
+      svg += '<line x1="' + xAt(i).toFixed(1) + '" x2="' + xAt(i).toFixed(1) + '" y1="' + padT + '" y2="' + (h - padB) + '" stroke="var(--line-soft)" stroke-width="0.6" stroke-opacity="0.7"/>';
       svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + label + "</text>";
     });
 
