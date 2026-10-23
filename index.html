@@ -435,7 +435,7 @@
     <section id="panel-compare" class="panel active">
       <div class="card" id="pivotCard">
         <h2 id="pivotTitle">La daily di oggi</h2>
-        <p class="sub" id="pivotSub">I punteggi di oggi, round per round. Fino a mezzanotte il podio, e quindi i Geopoints, può ancora cambiare.</p>
+        <p class="sub" id="pivotSub">I punteggi di oggi, round per round. Fino a mezzanotte il podio, e quindi i punti aura, può ancora cambiare.</p>
         <div id="pivotBody"></div>
         <p class="note">Nuovo qui? In <a href="#" data-goto="rules">Regole</a> trovi come funziona.</p>
       </div>
@@ -444,7 +444,7 @@
     <section id="panel-leaderboard" class="panel">
       <div class="card" id="leaderboardCard">
         <h2>Classifica</h2>
-        <p class="sub">Ultimi 15 giorni. Ogni partita vale da 1 a 5 Geopoints, più un bonus se sei sul podio del giorno. Un giorno senza partita vale 0. Il dettaglio è in <a href="#" data-goto="rules">Regole</a>.</p>
+        <p class="sub">Ultimi 15 giorni. Ogni partita vale da 1 a 5 punti aura, più un bonus se sei sul podio del giorno. Un giorno senza partita vale 0. Il dettaglio è in <a href="#" data-goto="rules">Regole</a>.</p>
         <div id="leaderboardBody"></div>
         <p class="note">A parità vince la media più alta. Chi non gioca per 15 giorni esce dalla classifica e rientra alla prima partita.</p>
       </div>
@@ -520,32 +520,32 @@
           <li>Caricalo nella scheda <a href="#" data-goto="add">Carica</a> con il tuo nome.</li>
         </ol>
 
-        <h3>Geopoints</h3>
-        <p>Ogni partita vale da 1 a 5 Geopoints in base ai punti fatti:</p>
+        <h3>Punti aura</h3>
+        <p>Ogni partita vale da 1 a 5 punti aura in base al punteggio:</p>
         <ul class="geo-list">
-          <li><b class="num">0 Geopoints</b> non hai giocato</li>
-          <li><b class="num">1 Geopoint</b> sotto 14.000 punti</li>
-          <li><b class="num">2 Geopoints</b> da 14.000 punti</li>
-          <li><b class="num">3 Geopoints</b> da 16.500 punti</li>
-          <li><b class="num">4 Geopoints</b> da 18.500 punti</li>
-          <li><b class="num">5 Geopoints</b> da 20.500 punti</li>
+          <li><b class="num">0 punti aura</b> non hai giocato</li>
+          <li><b class="num">1 punto aura</b> sotto 14.000 punti</li>
+          <li><b class="num">2 punti aura</b> da 14.000 punti</li>
+          <li><b class="num">3 punti aura</b> da 16.500 punti</li>
+          <li><b class="num">4 punti aura</b> da 18.500 punti</li>
+          <li><b class="num">5 punti aura</b> da 20.500 punti</li>
         </ul>
 
         <h3>Podio del giorno</h3>
         <p>I tre migliori punteggi di ogni daily prendono un bonus:</p>
         <ul class="geo-list">
-          <li><b class="num">+3 Geopoints</b> al primo</li>
-          <li><b class="num">+2 Geopoints</b> al secondo</li>
-          <li><b class="num">+1 Geopoint</b> al terzo</li>
+          <li><b class="num">+3 punti aura</b> al primo</li>
+          <li><b class="num">+2 punti aura</b> al secondo</li>
+          <li><b class="num">+1 punto aura</b> al terzo</li>
         </ul>
-        <p>In una giornata puoi fare da 0 a 8 Geopoints. La classifica li somma sugli ultimi 15 giorni: conta giocare bene, ma anche giocare spesso.</p>
+        <p>In una giornata puoi fare da 0 a 8 punti aura. La classifica li somma sugli ultimi 15 giorni: conta giocare bene, ma anche giocare spesso.</p>
 
         <h3>Sempre gli ultimi 15 giorni</h3>
-        <p>La classifica non si azzera mai. Conta sempre gli ultimi 15 giorni, oggi compreso: ogni giorno entra la daily nuova ed esce quella di 15 giorni prima. Vale per Geopoints, media, vittorie e grafico. Il record invece è di sempre.</p>
+        <p>La classifica non si azzera mai. Conta sempre gli ultimi 15 giorni, oggi compreso: ogni giorno entra la daily nuova ed esce quella di 15 giorni prima. Vale per punti aura, media, vittorie e grafico. Il record invece è di sempre.</p>
 
         <h3>Le altre colonne</h3>
         <ul class="col-list">
-          <li><b>Media</b> il punteggio medio delle tue partite. Decide a parità di Geopoints.</li>
+          <li><b>Media</b> il punteggio medio delle tue partite. Decide a parità di punti aura.</li>
           <li><b>Partite</b> quante daily hai giocato negli ultimi 15 giorni, su 15. Vale per tutti allo stesso modo, anche per chi ha iniziato da poco.</li>
           <li><b>🏆 Vittorie</b> quante daily hai vinto negli ultimi 15 giorni. Vinci una daily quando fai più punti di tutti quel giorno.</li>
           <li><b>Record</b> il tuo miglior punteggio di sempre.</li>
@@ -736,7 +736,7 @@
     }
     var rows = computeStats();
     var html = '<div class="table-scroll"><table class="lb"><thead><tr>' +
-      "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Geopoints negli ultimi 15 giorni'>Geopoints</th>" +
+      "<th></th><th>Giocatore</th><th class='num-cell media-col' title='Punti aura negli ultimi 15 giorni'>Punti aura</th>" +
       "<th class='num-cell' title='Punteggio medio delle partite giocate'>Media</th>" +
       "<th class='num-cell' title='Daily giocate negli ultimi 15 giorni, su 15'>Partite</th>" +
       "<th class='num-cell' title='Daily vinte negli ultimi 15 giorni'>🏆</th><th class='num-cell' title='Miglior punteggio di sempre'>Record</th>" +
@@ -802,7 +802,7 @@
       var better = todays.filter(function (o) { return o.total > e.total; }).length;
       var geo = geoPoints(e.total) + (better < PODIUM_BONUS.length ? PODIUM_BONUS[better] : 0);
       html += "<td class='num-cell num media-col'>" + fmtInt(e.total) +
-        "<span class='geo-sub'>" + geo + (geo === 1 ? " Geopoint" : " Geopoints") + "</span></td></tr>";
+        "<span class='geo-sub'>" + geo + (geo === 1 ? " punto aura" : " punti aura") + "</span></td></tr>";
     });
     html += "</tbody></table></div>";
     pivotBody.innerHTML = html;
