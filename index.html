@@ -813,7 +813,12 @@
     var trendCard = $("trendCard");
     if (state.entries.length < 2) { trendCard.style.display = "none"; return; }
     var players = Array.from(new Set(state.entries.map(function (e) { return e.player; }))).sort();
-    var dates = Array.from(new Set(state.entries.map(function (e) { return e.date; }))).sort();
+    // always the full 15-day window on the x axis, even on days nobody played
+    var dates = [];
+    for (var k = 14; k >= 0; k--) {
+      var dd = new Date(); dd.setDate(dd.getDate() - k);
+      dates.push(new Date(dd.getTime() - dd.getTimezoneOffset() * 60000).toISOString().slice(0, 10));
+    }
     if (dates.length < 2) { trendCard.style.display = "none"; return; }
     trendCard.style.display = "";
     renderTrend(players, dates);
@@ -846,9 +851,11 @@
       svg += '<line x1="' + padL + '" x2="' + (w - padR) + '" y1="' + gl.y.toFixed(1) + '" y2="' + gl.y.toFixed(1) + '" stroke="var(--line-soft)" stroke-width="1"/>';
       svg += '<text x="' + (padL - 8) + '" y="' + (gl.y + 3).toFixed(1) + '" text-anchor="end" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + gl.label + "</text>";
     });
+    // one label per day: the day number, plus the month on the first day and on the 1st of a month
     datesAsc.forEach(function (d, i) {
-      if (datesAsc.length > 8 && i % Math.ceil(datesAsc.length / 6) !== 0 && i !== datesAsc.length - 1) return;
-      svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + fmtDateShort(d) + "</text>";
+      var day = Number(d.slice(8, 10));
+      var label = (i === 0 || day === 1) ? fmtDateShort(d) : String(day);
+      svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + label + "</text>";
     });
 
     var pointData = [];
