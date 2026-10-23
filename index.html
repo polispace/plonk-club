@@ -855,6 +855,7 @@
     datesAsc.forEach(function (d, i) {
       var day = Number(d.slice(8, 10));
       var label = (i === 0 || day === 1) ? fmtDateShort(d) : String(day);
+      svg += '<line x1="' + xAt(i).toFixed(1) + '" x2="' + xAt(i).toFixed(1) + '" y1="' + padT + '" y2="' + (h - padB) + '" stroke="var(--line-soft)" stroke-width="1"/>';
       svg += '<text x="' + xAt(i).toFixed(1) + '" y="' + (h - 8) + '" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="Inter, Helvetica, Arial, sans-serif">' + label + "</text>";
     });
 
